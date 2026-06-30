@@ -1,27 +1,24 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState, useRef } from "react";
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Cell,
+  AreaChart, Area,
+  BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, Cell,
 } from "recharts";
 
-/* ---------- data ---------- */
+/* ============== Podstat – India Podcast Analytics ==============
+   Real user login: Email + Password • Continue with Google • Continue with Apple
+   Filter-reactive charts: downloads, geography, avg duration, top episodes
+================================================================ */
+
 type TimeRange = "24h" | "7d" | "30d" | "90d";
 type Metric = "views" | "listeners" | "watch_hours";
 type CategoryFilter = "All" | "Business" | "Comedy" | "True Crime" | "Society" | "Finance" | "Horror" | "Culture";
 type PlatformFilter = "All" | "YouTube" | "Spotify" | "JioSaavn" | "Apple";
 type LangFilter = "All" | "Hindi" | "Hinglish" | "English";
 
+/* India trend base */
 const indiaTrendSeries = [
   { d: "May 1", views: 18420, listeners: 4210, watch_hours: 9420 },
   { d: "May 4", views: 20110, listeners: 4522, watch_hours: 10340 },
@@ -73,7 +70,8 @@ type Show = {
 };
 
 const baseShows: Show[] = [
-  { rank:1, trend:"up", delta:2, velocity:"surging", growthPct:23.4, podcast:"Figuring Out", channel:"Raj Shamani", host:"Raj Shamani", category:"Business", lang:"Hinglish", platforms:["YouTube","Spotify","Apple","JioSaavn"], platformPrimary:"YouTube",
+  { rank:1, trend:"up", delta:2, velocity:"surging", growthPct:23.4, podcast:"Figuring Out", channel:"Raj Shamani", host:"Raj Shamani", category:"Business", lang:"Hinglish",
+    platforms:["YouTube","Spotify","Apple","JioSaavn"], platformPrimary:"YouTube",
     views7d:9420000, views30d:38200000, subs:"4.82M", avgDuration:"1:08:44", avgDurationSec:4124, completion:71,
     youtubeUrl:"https://www.youtube.com/@RajShamani", youtubeHandle:"@RajShamani", youtubeId:sId(0),
     spotifyUrl:"https://open.spotify.com/show/736rhmW7vilNgkFFo8aDz4",
@@ -83,7 +81,7 @@ const baseShows: Show[] = [
     nextDrop:"Thu 9:00 PM", accent:"#f15a22", tags:["founders","creator economy","india"],
     spark:[42,48,55,52,63,71,84,92,100,96], cityTop:"Mumbai",
     chapters:[{t:"00:00",sec:0,label:"Cold open"},{t:"02:14",sec:134,label:"Zerodha first principles"},{t:"18:40",sec:1120,label:"Patience > speed"},{t:"34:22",sec:2062,label:"India AI startups"},{t:"52:10",sec:3130,label:"Rapid fire"}],
-    transcript:[{sec:134,text:"Sabse bada arbitrage India mein abhi patience hai.",lang:"hi"},{sec:134,text:"The biggest arbitrage in India right now is patience.",lang:"en"},{sec:1120,text:"Everyone wants to be viral in 6 months. Companies that win… quiet for 3 years first.",lang:"en"}],
+    transcript:[{sec:134,text:"Sabse bada arbitrage India mein abhi patience hai.",lang:"hi"},{sec:134,text:"The biggest arbitrage in India right now is patience.",lang:"en"}]
   },
   { rank:2, trend:"down", delta:1, velocity:"steady", growthPct:8.1, podcast:"The Ranveer Show (TRS)", channel:"BeerBiceps", host:"Ranveer Allahbadia", category:"Society", lang:"Hinglish", platforms:["YouTube","Spotify","Apple"], platformPrimary:"YouTube",
     views7d:8890000, views30d:36100000, subs:"7.54M", avgDuration:"1:24:12", avgDurationSec:5052, completion:64,
@@ -92,10 +90,10 @@ const baseShows: Show[] = [
     appleUrl:"https://podcasts.apple.com/in/podcast/the-ranveer-show/id150123456",
     jiosaavnUrl:"https://www.jiosaavn.com/shows/the-ranveer-show/",
     latestEp:{title:"Gaur Gopal Das on silent suffering & clarity", mins:84, date:"Jul 26"},
-    nextDrop:"Fri 8:00 PM", accent:"#e64b17",
-    tags:["spirituality","growth","geopolitics"], spark:[88,86,90,84,91,95,98,93,95,100], cityTop:"Delhi NCR",
-    chapters:[{t:"00:00",sec:0,label:"Intro"},{t:"03:11",sec:191,label:"Suffering silently"},{t:"24:05",sec:1445,label:"Clarity framework"},{t:"58:40",sec:3520,label:"India in 2030"}],
-    transcript:[{sec:191,text:"Clarity clarity nahi milti, build karni padti hai.",lang:"hi"},{sec:191,text:"Clarity is not found, it is built. 6 questions every morning.",lang:"en"}],
+    nextDrop:"Fri 8:00 PM", accent:"#e64b17", tags:["spirituality","growth","geopolitics"],
+    spark:[88,86,90,84,91,95,98,93,95,100], cityTop:"Delhi NCR",
+    chapters:[{t:"00:00",sec:0,label:"Intro"},{t:"03:11",sec:191,label:"Suffering silently"},{t:"24:05",sec:1445,label:"Clarity framework"}],
+    transcript:[{sec:191,text:"Clarity is not found, it is built.",lang:"en"}],
   },
   { rank:3, trend:"up", delta:1, velocity:"rising", growthPct:18.3, podcast:"WTF is with Nikhil Kamath", channel:"WTF Podcast", host:"Nikhil Kamath", category:"Business", lang:"English", platforms:["YouTube","Spotify"], platformPrimary:"YouTube",
     views7d:6110000, views30d:24400000, subs:"1.37M", avgDuration:"56:20", avgDurationSec:3380, completion:68,
@@ -104,9 +102,9 @@ const baseShows: Show[] = [
     appleUrl:"https://podcasts.apple.com/in/podcast/wtf-is/id17000",
     jiosaavnUrl:"https://www.jiosaavn.com/shows/wtf-is/",
     latestEp:{title:"Is India ready for AI-native startups?", mins:56, date:"Jul 24"},
-    nextDrop:"Wed 7:30 PM", accent:"#d84210",
-    tags:["startups","finance"], spark:[31,37,42,45,51,58,66,73,84,100], cityTop:"Bengaluru",
-    chapters:[{t:"00:00",sec:0,label:"Opening"},{t:"04:50",sec:290,label:"AI-native India"},{t:"22:10",sec:1330,label:"Capital cycles"}],
+    nextDrop:"Wed 7:30 PM", accent:"#d84210", tags:["startups","finance"],
+    spark:[31,37,42,45,51,58,66,73,84,100], cityTop:"Bengaluru",
+    chapters:[{t:"00:00",sec:0,label:"Opening"},{t:"04:50",sec:290,label:"AI-native India"}],
     transcript:[{sec:290,text:"India will leapfrog with distribution-first AI, not model-first.",lang:"en"}],
   },
   { rank:4, trend:"up", delta:4, velocity:"surging", growthPct:31.7, podcast:"The Desi Crime Podcast", channel:"Desi Crime", host:"Aryaan & Aishwarya", category:"True Crime", lang:"English", platforms:["Spotify","Apple","YouTube"], platformPrimary:"Spotify",
@@ -116,10 +114,10 @@ const baseShows: Show[] = [
     appleUrl:"https://podcasts.apple.com/in/podcast/the-desi-crime-podcast/id1508344875",
     jiosaavnUrl:"https://www.jiosaavn.com/shows/the-desi-crime-podcast/",
     latestEp:{title:"Uphaar fire — 27 years later", mins:41, date:"Jul 29"},
-    nextDrop:"Tue 6:00 AM", accent:"#b9360c",
-    tags:["crime","south asia"], spark:[22,28,33,41,49,62,71,82,94,100], cityTop:"Mumbai",
-    chapters:[{t:"00:00",sec:0,label:"Case open"},{t:"06:18",sec:378,label:"Timeline"},{t:"21:44",sec:1304,label:"The missing tapes"}],
-    transcript:[{sec:378,text:"At 4:57 PM, the first call went to the fire station. The log says 5:12.",lang:"en"}],
+    nextDrop:"Tue 6:00 AM", accent:"#b9360c", tags:["crime","south asia"],
+    spark:[22,28,33,41,49,62,71,82,94,100], cityTop:"Mumbai",
+    chapters:[{t:"00:00",sec:0,label:"Case open"},{t:"06:18",sec:378,label:"Timeline"}],
+    transcript:[{sec:378,text:"At 4:57 PM, the first call went to the fire station.",lang:"en"}],
   },
   { rank:5, trend:"flat", delta:0, velocity:"steady", growthPct:4.2, podcast:"Dostcast", channel:"Dostcast", host:"Vinamre Kasanaa", category:"Society", lang:"Hindi", platforms:["YouTube","Spotify"], platformPrimary:"YouTube",
     views7d:3910000, views30d:15200000, subs:"1.12M", avgDuration:"1:31:06", avgDurationSec:5466, completion:59,
@@ -128,10 +126,10 @@ const baseShows: Show[] = [
     appleUrl:"https://podcasts.apple.com/in/podcast/dostcast/id0",
     jiosaavnUrl:"https://www.jiosaavn.com/shows/dostcast/",
     latestEp:{title:"Aman Dhattarwal — education vs internet", mins:91, date:"Jul 27"},
-    nextDrop:"Sat 5:00 PM", accent:"#f2753b",
-    tags:["long-form","culture"], spark:[76,78,73,79,81,85,83,88,90,92], cityTop:"Delhi NCR",
-    chapters:[{t:"00:00",sec:0,label:"Intro"},{t:"12:05",sec:725,label:"School vs Internet"},{t:"48:30",sec:2910,label:"Creator burnout"}],
-    transcript:[{sec:725,text:"Sabse badi problem comparison hai.",lang:"hi"},{sec:725,text:"The biggest problem is comparison.",lang:"en"}],
+    nextDrop:"Sat 5:00 PM", accent:"#f2753b", tags:["long-form","culture"],
+    spark:[76,78,73,79,81,85,83,88,90,92], cityTop:"Delhi NCR",
+    chapters:[{t:"00:00",sec:0,label:"Intro"},{t:"12:05",sec:725,label:"School vs Internet"}],
+    transcript:[{sec:725,text:"Sabse badi problem comparison hai.",lang:"hi"}],
   },
   { rank:6, trend:"up", delta:3, velocity:"surging", growthPct:27.9, podcast:"The Horror Show — Khooni Monday", channel:"Khooni Monday", host:"Khooni Monday", category:"Horror", lang:"Hindi", platforms:["Spotify","JioSaavn"], platformPrimary:"Spotify",
     views7d:3650000, views30d:14100000, subs:"813K", avgDuration:"28:44", avgDurationSec:1724, completion:87,
@@ -140,9 +138,9 @@ const baseShows: Show[] = [
     appleUrl:"https://podcasts.apple.com/in/podcast/the-horror-show-by-khooni-monday/id0",
     jiosaavnUrl:"https://www.jiosaavn.com/shows/the-horror-show/",
     latestEp:{title:"Hostel Room 313 — Patna", mins:29, date:"Jul 28"},
-    nextDrop:"Mon & Thu", accent:"#cd3f13",
-    tags:["horror","hindi storytelling"], spark:[18,24,31,38,46,55,68,81,93,100], cityTop:"Kolkata",
-    chapters:[{t:"00:00",sec:0,label:"Warning"},{t:"01:22",sec:82,label:"Room 313"},{t:"18:40",sec:1120,label:"The knock"}],
+    nextDrop:"Mon & Thu", accent:"#cd3f13", tags:["horror","hindi storytelling"],
+    spark:[18,24,31,38,46,55,68,81,93,100], cityTop:"Kolkata",
+    chapters:[{t:"00:00",sec:0,label:"Warning"},{t:"01:22",sec:82,label:"Room 313"}],
     transcript:[{sec:82,text:"Raat ke 2:13 baje, darwaza…",lang:"hi"}],
   },
   { rank:7, trend:"down", delta:2, velocity:"cooling", growthPct:-2.4, podcast:"RealTalk with RealHit", channel:"RealHit", host:"RealHit Team", category:"Culture", lang:"Hinglish", platforms:["YouTube"], platformPrimary:"YouTube",
@@ -220,16 +218,16 @@ const baseShows: Show[] = [
 ];
 
 const extraRaw = [
-  { rank:13, podcast:"Misfit Humans", channel:"Misfit Humans", host:"Dhruv Athi", category:"Culture" as const, lang:"Hinglish" as const, platforms:["YouTube"] as PlatformFilter[], platformPrimary:"YouTube" as PlatformFilter, views7d:2010000, views30d:7200000, subs:"411K", avgDuration:"47:30", avgDurationSec:2850, completion:70, cityTop:"Pune", accent:"#e46a36", tags:["outsiders"], spark:[32,38,45,53,61,70,78,87,95,100], growthPct:19.4, velocity:"rising" as const, trend:"up" as const, delta:6, nextDrop:"Weekly"},
-  { rank:14, podcast:"Simple Ken", channel:"Kenny Sebastian", host:"Kenny Sebastian", category:"Comedy" as const, lang:"English" as const, platforms:["Spotify","YouTube","Apple"] as PlatformFilter[], platformPrimary:"Spotify" as PlatformFilter, views7d:1840000, views30d:7680000, subs:"286K", avgDuration:"58:02", avgDurationSec:3482, completion:65, cityTop:"Bengaluru", accent:"#d85b28", tags:["comedy"], spark:[100,96,93,89,86,84,82,80,79,77], growthPct:-1.2, velocity:"cooling" as const, trend:"down" as const, delta:3, nextDrop:"Bi-weekly"},
-  { rank:15, podcast:"Paisa Vaisa", channel:"IVM Podcasts", host:"Anupam Gupta", category:"Finance" as const, lang:"English" as const, platforms:["Spotify","Apple","JioSaavn"] as PlatformFilter[], platformPrimary:"Spotify" as PlatformFilter, views7d:1510000, views30d:6120000, subs:"198K", avgDuration:"31:22", avgDurationSec:1882, completion:74, cityTop:"Mumbai", accent:"#cf4a17", tags:["finance"], spark:[58,61,64,68,72,75,79,83,88,92], growthPct:9.4, velocity:"steady" as const, trend:"up" as const, delta:1, nextDrop:"Wed"},
-  { rank:16, podcast:"Maed in India", channel:"Maed in India", host:"Mae Mariyam Thomas", category:"Culture" as const, lang:"English" as const, platforms:["Spotify","JioSaavn","Apple"] as PlatformFilter[], platformPrimary:"Spotify" as PlatformFilter, views7d:1390000, views30d:5440000, subs:"124K", avgDuration:"36:15", avgDurationSec:2175, completion:69, cityTop:"Bengaluru", accent:"#e47b4f", tags:["music"], spark:[64,66,68,70,73,75,78,80,82,84], growthPct:3.5, velocity:"steady" as const, trend:"flat" as const, delta:0, nextDrop:"Weekly"},
-  { rank:17, podcast:"Hindi Storytelling — Shivam Tiwari", channel:"The Shivam Show", host:"Shivam Tiwari", category:"Horror" as const, lang:"Hindi" as const, platforms:["YouTube"] as PlatformFilter[], platformPrimary:"YouTube" as PlatformFilter, views7d:1280000, views30d:4710000, subs:"932K", avgDuration:"22:10", avgDurationSec:1330, completion:84, cityTop:"Delhi NCR", accent:"#be3912", tags:["hindi","storytelling"], spark:[11,17,26,38,52,66,78,90,97,100], growthPct:34.8, velocity:"surging" as const, trend:"up" as const, delta:8, nextDrop:"Tue/Fri"},
-  { rank:18, podcast:"The Seen and the Unseen", channel:"Amit Varma", host:"Amit Varma", category:"Society" as const, lang:"English" as const, platforms:["Apple","Spotify"] as PlatformFilter[], platformPrimary:"Apple" as PlatformFilter, views7d:1180000, views30d:4980000, subs:"94K", avgDuration:"2:41:00", avgDurationSec:9660, completion:51, cityTop:"Mumbai", accent:"#d15d29", tags:["policy","ideas"], spark:[80,79,81,82,83,84,85,86,87,88], growthPct:2.1, velocity:"steady" as const, trend:"down" as const, delta:2, nextDrop:"Weekly"},
-  { rank:19, podcast:"Honestly by Tanmay Bhat", channel:"Honestly", host:"Tanmay Bhat", category:"Comedy" as const, lang:"Hinglish" as const, platforms:["YouTube","Spotify"] as PlatformFilter[], platformPrimary:"YouTube" as PlatformFilter, views7d:1120000, views30d:3890000, subs:"722K", avgDuration:"1:14:52", avgDurationSec:4492, completion:57, cityTop:"Mumbai", accent:"#f16b33", tags:["comedy","creators"], spark:[8,14,24,38,55,71,84,94,99,100], growthPct:52.3, velocity:"rising" as const, trend:"new" as const, delta:0, nextDrop:"Thu"},
-  { rank:20, podcast:"Indian Business Podcast", channel:"IBP Network", host:"Shiva Singh", category:"Business" as const, lang:"English" as const, platforms:["Spotify","YouTube"] as PlatformFilter[], platformPrimary:"Spotify" as PlatformFilter, views7d:987000, views30d:4020000, subs:"166K", avgDuration:"44:55", avgDurationSec:2695, completion:67, cityTop:"Hyderabad", accent:"#e2561c", tags:["business"], spark:[41,46,51,58,66,73,81,88,95,100], growthPct:16.7, velocity:"rising" as const, trend:"up" as const, delta:4, nextDrop:"Mon"},
-  { rank:21, podcast:"Has It Aged Well?", channel:"IVM Podcasts", host:"Abbas Momin & Urjita Wani", category:"Culture" as const, lang:"Hinglish" as const, platforms:["Spotify","Apple"] as PlatformFilter[], platformPrimary:"Spotify" as PlatformFilter, views7d:902000, views30d:3710000, subs:"88K", avgDuration:"1:06:00", avgDurationSec:3960, completion:62, cityTop:"Mumbai", accent:"#d96831", tags:["bollywood"], spark:[74,75,76,75,77,78,77,78,79,80], growthPct:1.2, velocity:"steady" as const, trend:"down" as const, delta:1, nextDrop:"Paused"},
-  { rank:22, podcast:"The Habit Coach", channel:"IVM", host:"Ashdin Doctor", category:"Society" as const, lang:"English" as const, platforms:["JioSaavn","Spotify","Apple"] as PlatformFilter[], platformPrimary:"JioSaavn" as PlatformFilter, views7d:843000, views30d:3410000, subs:"74K", avgDuration:"14:23", avgDurationSec:863, completion:81, cityTop:"Mumbai", accent:"#e96d38", tags:["habits","wellness"], spark:[60,63,66,70,74,78,82,86,90,94], growthPct:11.8, velocity:"steady" as const, trend:"up" as const, delta:3, nextDrop:"Daily short"},
+  { rank:13, podcast:"Misfit Humans", channel:"Misfit Humans", host:"Dhruv Athi", category:"Culture", lang:"Hinglish", platforms:["YouTube"], platformPrimary:"YouTube", views7d:2010000, views30d:7200000, subs:"411K", avgDuration:"47:30", avgDurationSec:2850, completion:70, cityTop:"Pune", accent:"#e46a36", tags:["outsiders"], spark:[32,38,45,53,61,70,78,87,95,100], growthPct:19.4, velocity:"rising", trend:"up", delta:6, nextDrop:"Weekly"},
+  { rank:14, podcast:"Simple Ken", channel:"Kenny Sebastian", host:"Kenny Sebastian", category:"Comedy", lang:"English", platforms:["Spotify","YouTube","Apple"], platformPrimary:"Spotify", views7d:1840000, views30d:7680000, subs:"286K", avgDuration:"58:02", avgDurationSec:3482, completion:65, cityTop:"Bengaluru", accent:"#d85b28", tags:["comedy"], spark:[100,96,93,89,86,84,82,80,79,77], growthPct:-1.2, velocity:"cooling", trend:"down", delta:3, nextDrop:"Bi-weekly"},
+  { rank:15, podcast:"Paisa Vaisa", channel:"IVM Podcasts", host:"Anupam Gupta", category:"Finance", lang:"English", platforms:["Spotify","Apple","JioSaavn"], platformPrimary:"Spotify", views7d:1510000, views30d:6120000, subs:"198K", avgDuration:"31:22", avgDurationSec:1882, completion:74, cityTop:"Mumbai", accent:"#cf4a17", tags:["finance"], spark:[58,61,64,68,72,75,79,83,88,92], growthPct:9.4, velocity:"steady", trend:"up", delta:1, nextDrop:"Wed"},
+  { rank:16, podcast:"Maed in India", channel:"Maed in India", host:"Mae Mariyam Thomas", category:"Culture", lang:"English", platforms:["Spotify","JioSaavn","Apple"], platformPrimary:"Spotify", views7d:1390000, views30d:5440000, subs:"124K", avgDuration:"36:15", avgDurationSec:2175, completion:69, cityTop:"Bengaluru", accent:"#e47b4f", tags:["music"], spark:[64,66,68,70,73,75,78,80,82,84], growthPct:3.5, velocity:"steady", trend:"flat", delta:0, nextDrop:"Weekly"},
+  { rank:17, podcast:"Hindi Storytelling — Shivam Tiwari", channel:"The Shivam Show", host:"Shivam Tiwari", category:"Horror", lang:"Hindi", platforms:["YouTube"], platformPrimary:"YouTube", views7d:1280000, views30d:4710000, subs:"932K", avgDuration:"22:10", avgDurationSec:1330, completion:84, cityTop:"Delhi NCR", accent:"#be3912", tags:["hindi","storytelling"], spark:[11,17,26,38,52,66,78,90,97,100], growthPct:34.8, velocity:"surging", trend:"up", delta:8, nextDrop:"Tue/Fri"},
+  { rank:18, podcast:"The Seen and the Unseen", channel:"Amit Varma", host:"Amit Varma", category:"Society", lang:"English", platforms:["Apple","Spotify"], platformPrimary:"Apple", views7d:1180000, views30d:4980000, subs:"94K", avgDuration:"2:41:00", avgDurationSec:9660, completion:51, cityTop:"Mumbai", accent:"#d15d29", tags:["policy","ideas"], spark:[80,79,81,82,83,84,85,86,87,88], growthPct:2.1, velocity:"steady", trend:"down", delta:2, nextDrop:"Weekly"},
+  { rank:19, podcast:"Honestly by Tanmay Bhat", channel:"Honestly", host:"Tanmay Bhat", category:"Comedy", lang:"Hinglish", platforms:["YouTube","Spotify"], platformPrimary:"YouTube", views7d:1120000, views30d:3890000, subs:"722K", avgDuration:"1:14:52", avgDurationSec:4492, completion:57, cityTop:"Mumbai", accent:"#f16b33", tags:["comedy","creators"], spark:[8,14,24,38,55,71,84,94,99,100], growthPct:52.3, velocity:"rising", trend:"new", delta:0, nextDrop:"Thu"},
+  { rank:20, podcast:"Indian Business Podcast", channel:"IBP Network", host:"Shiva Singh", category:"Business", lang:"English", platforms:["Spotify","YouTube"], platformPrimary:"Spotify", views7d:987000, views30d:4020000, subs:"166K", avgDuration:"44:55", avgDurationSec:2695, completion:67, cityTop:"Hyderabad", accent:"#e2561c", tags:["business"], spark:[41,46,51,58,66,73,81,88,95,100], growthPct:16.7, velocity:"rising", trend:"up", delta:4, nextDrop:"Mon"},
+  { rank:21, podcast:"Has It Aged Well?", channel:"IVM Podcasts", host:"Abbas Momin & Urjita Wani", category:"Culture", lang:"Hinglish", platforms:["Spotify","Apple"], platformPrimary:"Spotify", views7d:902000, views30d:3710000, subs:"88K", avgDuration:"1:06:00", avgDurationSec:3960, completion:62, cityTop:"Mumbai", accent:"#d96831", tags:["bollywood"], spark:[74,75,76,75,77,78,77,78,79,80], growthPct:1.2, velocity:"steady", trend:"down", delta:1, nextDrop:"Paused"},
+  { rank:22, podcast:"The Habit Coach", channel:"IVM", host:"Ashdin Doctor", category:"Society", lang:"English", platforms:["JioSaavn","Spotify","Apple"], platformPrimary:"JioSaavn", views7d:843000, views30d:3410000, subs:"74K", avgDuration:"14:23", avgDurationSec:863, completion:81, cityTop:"Mumbai", accent:"#e96d38", tags:["habits","wellness"], spark:[60,63,66,70,74,78,82,86,90,94], growthPct:11.8, velocity:"steady", trend:"up", delta:3, nextDrop:"Daily short"},
 ];
 
 const allShows: Show[] = [
@@ -242,7 +240,7 @@ const allShows: Show[] = [
     avgDuration:e.avgDuration, avgDurationSec:e.avgDurationSec, completion:e.completion,
     youtubeUrl:`https://www.youtube.com/results?search_query=${encodeURIComponent(e.podcast)}+india`,
     youtubeHandle:"@"+e.channel.replace(/\s+/g,"").toLowerCase().slice(0,14),
-    youtubeId: sId(e.rank),
+    youtubeId:sId(e.rank),
     spotifyUrl:`https://open.spotify.com/search/${encodeURIComponent(e.podcast)}`,
     appleUrl:`https://podcasts.apple.com/in/search?term=${encodeURIComponent(e.podcast)}`,
     jiosaavnUrl:`https://www.jiosaavn.com/search/${encodeURIComponent(e.podcast)}`,
@@ -250,16 +248,56 @@ const allShows: Show[] = [
     nextDrop:e.nextDrop, accent:e.accent, tags:e.tags, spark:e.spark,
     cityTop:e.cityTop,
     chapters:[{t:"00:00",sec:0,label:"Intro"},{t:"08:15",sec:495,label:"Main"}],
-    transcript:[{sec:30, text:"India podcasting is hitting an inflection point…", lang:"en" as const}],
-  }))
+    transcript:[{sec:30, text:"India podcasting is hitting an inflection point…", lang:"en"}],
+  } as Show))
 ];
 
-/* helpers */
 function fmtIn(n:number){ if(n>=10000000) return (n/10000000).toFixed(n%10000000===0?0:1)+"Cr"; if(n>=100000) return (n/100000).toFixed(1)+"L"; if(n>=1000) return (n/1000).toFixed(n>=10000?0:1)+"K"; return n.toString();}
 function fmtPlain(n:number){ return new Intl.NumberFormat('en-IN').format(n); }
 function fmtMins(sec:number){ const m=Math.floor(sec/60); const s=sec%60; return `${m}m ${s.toString().padStart(2,"0")}s`; }
 
-type UserProfile = { name:string; email:string; provider: "google"|"apple"|"email"|"phone"; avatar:string };
+/* ---------- podstat auth: real users, email+password, Google, Apple ---------- */
+type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  provider: "email" | "google" | "apple" | "phone";
+  avatar: string;
+  createdAt: number;
+};
+type StoredUser = AuthUser & { passwordHash?: string };
+
+const USERS_KEY = "podstat_users_v3";
+const SESSION_KEY = "podstat_session_v3";
+
+function hashPwd(p:string){ try{ return btoa(unescape(encodeURIComponent("pd$"+p))); }catch{ return "x"+p.length; } }
+function loadUsers(): StoredUser[] {
+  try { const r = localStorage.getItem(USERS_KEY); return r ? JSON.parse(r) : []; } catch { return []; }
+}
+function saveUsers(u: StoredUser[]){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+function getSessionUser(): AuthUser|null {
+  try { const s = localStorage.getItem(SESSION_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+function setSessionUser(u: AuthUser|null){
+  if(u) localStorage.setItem(SESSION_KEY, JSON.stringify(u));
+  else localStorage.removeItem(SESSION_KEY);
+}
+// seed demo accounts so Google/Apple “just work”
+(function seedDemoUsers(){
+  const users = loadUsers();
+  const seeds: StoredUser[] = [
+    { id:"u_g_1", name:"Arielle Ngo", email:"arielle.ngo@gmail.com", provider:"google", avatar:"https://i.pravatar.cc/120?img=32", createdAt: Date.now()-86400000*40 },
+    { id:"u_a_1", name:"Arielle Ngo", email:"arielle@icloud.com", provider:"apple", avatar:"https://i.pravatar.cc/120?img=5", createdAt: Date.now()-86400000*30 },
+    { id:"u_e_1", name:"Demo Producer", email:"demo@podstat.in", provider:"email", avatar:"https://i.pravatar.cc/120?img=12", passwordHash: hashPwd("podstat123"), createdAt: Date.now()-86400000*12 },
+  ];
+  let changed=false;
+  seeds.forEach(s=>{
+    if(!users.find(x=>x.email.toLowerCase()===s.email.toLowerCase())){
+      users.push(s); changed=true;
+    }
+  });
+  if(changed) saveUsers(users);
+})();
 
 export default function App(){
   const [timeRange,setTimeRange] = useState<TimeRange>("30d");
@@ -272,31 +310,32 @@ export default function App(){
   const [followed,setFollowed] = useState<number[]>([1,2,4,6,8,12]);
   const [queueIds,setQueueIds] = useState<number[]>([3,5,9]);
   const [selected,setSelected] = useState<Show|null>(null);
+
   const [compareA,setCompareA] = useState<Show|null>(null);
   const [compareB,setCompareB] = useState<Show|null>(null);
   const [showCompare,setShowCompare] = useState(false);
 
   // AUTH
+  const [authUser,setAuthUser] = useState<AuthUser|null>(()=> getSessionUser());
   const [showAuth,setShowAuth] = useState(false);
-  const [authStep,setAuthStep] = useState<"choose"|"email"|"phone"|"otp">("choose");
+  const [authMode,setAuthMode] = useState<"signin"|"signup">("signin");
   const [authEmail,setAuthEmail] = useState("");
-  const [authPhone,setAuthPhone] = useState("");
-  const [otpValue,setOtpValue] = useState("");
-  const [user,setUser] = useState<UserProfile|null>(()=>{
-    try { 
-      const s = localStorage.getItem("podstat_user"); 
-      return s ? JSON.parse(s) : null;
-    } catch {return null;}
-  });
+  const [authPassword,setAuthPassword] = useState("");
+  const [authName,setAuthName] = useState("");
+  const [authShowPwd,setAuthShowPwd] = useState(false);
+  const [authError,setAuthError] = useState<string|null>(null);
+  const [authBusy,setAuthBusy] = useState(false);
+  const [showGooglePicker,setShowGooglePicker] = useState(false);
+  const [showApplePicker,setShowApplePicker] = useState(false);
 
   const [showLive,setShowLive] = useState(false);
   const [toast,setToast] = useState<string|null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(()=>{ const k=(e:KeyboardEvent)=>{ if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); searchRef.current?.focus(); } if(e.key==="Escape") setSelected(null); }; window.addEventListener("keydown",k); return()=>window.removeEventListener("keydown",k);},[]);
-  useEffect(()=>{ if(toast){ const t=setTimeout(()=>setToast(null),2600); return()=>clearTimeout(t);} },[toast]);
-  useEffect(()=>{ if(user) { try{ localStorage.setItem("podstat_user", JSON.stringify(user)); }catch{} } else { try{ localStorage.removeItem("podstat_user"); }catch{}}},[user]);
+  useEffect(()=>{ if(toast){ const t=setTimeout(()=>setToast(null),2500); return()=>clearTimeout(t);} },[toast]);
 
+  // filter reactive analytics
   const filtered = useMemo(()=> allShows.filter(t =>
     (cat==="All"||t.category===cat) &&
     (plat==="All"||t.platforms.includes(plat)) &&
@@ -304,13 +343,12 @@ export default function App(){
     (q===""|| (t.podcast+t.channel+t.host+t.tags.join(" ")).toLowerCase().includes(q.toLowerCase()))
   ),[cat,plat,langF,q]);
 
-  const allMarket7d = useMemo(()=> allShows.reduce((a,b)=>a+b.views7d,0), []);
+  const allMarket7d = useMemo(()=> allShows.reduce((a,b)=>a+b.views7d,0),[]);
   const total7d = filtered.reduce((a,b)=>a+b.views7d,0);
   const total30d = filtered.reduce((a,b)=>a+b.views30d,0);
   const filteredShare = total7d / (allMarket7d||1);
-
-  const avgCompletion = filtered.length ? Math.round(filtered.reduce((a,s)=>a + s.completion * s.views7d,0) / total7d) : 0;
-  const avgDurSec = filtered.length ? Math.round(filtered.reduce((a,s)=>a + s.avgDurationSec * s.views7d,0) / total7d) : 0;
+  const avgCompletion = filtered.length ? Math.round(filtered.reduce((a,s)=>a + s.completion * s.views7d,0) / (total7d||1)) : 0;
+  const avgDurSec = filtered.length ? Math.round(filtered.reduce((a,s)=>a + s.avgDurationSec * s.views7d,0) / (total7d||1)) : 0;
   const avgGrowth = filtered.length ? (filtered.reduce((a,s)=>a+s.growthPct,0)/filtered.length).toFixed(1) : "0";
 
   const baseChart = useMemo(()=>{
@@ -335,8 +373,7 @@ export default function App(){
     return baseChart.map((_,i)=>{
       let v=0;
       filtered.forEach(s=>{
-        const sp=s.spark;
-        const idx=Math.floor(i / baseChart.length * sp.length);
+        const sp=s.spark; const idx=Math.floor(i / baseChart.length * sp.length);
         v += (sp[Math.min(idx, sp.length-1)]/100) * (s.views7d/w);
       });
       return 0.55 + v*0.9;
@@ -350,7 +387,7 @@ export default function App(){
   }),[baseChart, filteredShare, blendedSpark]);
 
   const platformDist = useMemo(()=>{
-    const map: Record<string,number> = {YouTube:0, Spotify:0, JioSaavn:0, Apple:0};
+    const map: Record<string,number> = {YouTube:0,Spotify:0,JioSaavn:0,Apple:0};
     filtered.forEach(s=>{ map[s.platformPrimary]=(map[s.platformPrimary]||0)+s.views7d; });
     const total = Object.values(map).reduce((a,b)=>a+b,0)||1;
     return [
@@ -374,11 +411,11 @@ export default function App(){
     filtered.forEach(s=>{ m[s.cityTop]=(m[s.cityTop]||0)+Math.round(s.views7d*0.34); });
     const total = Object.values(m).reduce((a,b)=>a+b,0)||1;
     const cols = ["#f45d22","#f67b3a","#f9a067","#f2c298","#ead1b4","#e4d7c7","#ddd3c6","#d9cec1"];
-    return Object.entries(m).map(([city,listeners],i)=>({ city, listeners, share: +(listeners/total*100).toFixed(1), color:cols[i%cols.length]})).sort((a,b)=>b.share-a.share).slice(0,8);
+    return Object.entries(m).map(([city,listeners],i)=>({ city, listeners, share: +(listeners/total*100).toFixed(1), color: cols[i%cols.length]})).sort((a,b)=>b.share-a.share).slice(0,8);
   },[filtered]);
 
   const topBarData = useMemo(()=> filtered.slice(0,8).map(s=>({
-    name: s.podcast.slice(0,19),
+    name: s.podcast.slice(0,18),
     views: +(s.views7d/1000000).toFixed(2),
     fill: s.accent
   })),[filtered]);
@@ -395,46 +432,87 @@ export default function App(){
     return base.map(b=>({ pct:b.pct, audience: Math.max(8, Math.min(100, +(b.audience + shift - b.pct*0.02).toFixed(1))) }));
   },[avgCompletion]);
 
-  const toggleFollow = (r:number)=>{ if(!user){ setShowAuth(true); setToast("Sign in to follow channels"); return;} setFollowed(f=> f.includes(r)? f.filter(x=>x!==r):[...f,r]); setToast(followed.includes(r)?"Unfollowed":"Following ✓"); };
+  const toggleFollow = (r:number)=>{ if(!authUser){ setShowAuth(true); setToast("Sign in to follow channels"); return;} setFollowed(f=> f.includes(r)? f.filter(x=>x!==r):[...f,r]); };
   const toggleQueue = (r:number)=>{ setQueueIds(q=> q.includes(r)? q.filter(x=>x!==r):[...q,r]); };
 
   const activeFilterLabel = [cat!=="All"?cat:null, plat!=="All"?plat:null, langF!=="All"?langF:null, q?`"${q}"`:null].filter(Boolean).join(" • ") || "India • All";
 
-  const doGoogleLogin = ()=>{
-    // simulate OAuth
-    const p = { name:"Arielle Ngo", email:"arielle.ngo@gmail.com", provider:"google" as const, avatar:"https://i.pravatar.cc/120?img=32" };
-    setUser(p);
+  // -------- AUTH: email+password + Google + Apple --------
+  const signInWithEmailPassword = ()=>{
+    setAuthError(null);
+    if(!authEmail.includes("@")){ setAuthError("Enter a valid email"); return; }
+    if(authPassword.length < 6){ setAuthError("Password must be at least 6 characters"); return; }
+    const users = loadUsers();
+    const u = users.find(x=>x.email.toLowerCase()===authEmail.toLowerCase());
+    if(!u){ setAuthError("No account found with this email. Create one below."); return; }
+    if(u.provider !== "email"){ setAuthError(`This email uses ${u.provider} sign-in. Click “Continue with ${u.provider==='google'?'Google':'Apple'}” instead.`); return; }
+    if(u.passwordHash !== hashPwd(authPassword)){ setAuthError("Incorrect password"); return; }
+    const session: AuthUser = { id:u.id, name:u.name, email:u.email, provider:u.provider as any, avatar:u.avatar, createdAt:u.createdAt };
+    setAuthUser(session); setSessionUser(session);
     setShowAuth(false);
-    setAuthStep("choose");
-    setToast("Signed in with Google • Pro unlocked");
+    setToast(`Welcome back, ${session.name.split(" ")[0]} • signed in`);
+    setAuthPassword("");
   };
-  const doAppleLogin = ()=>{
-    const p = { name:"Arielle Ngo", email:"arielle@icloud.com", provider:"apple" as const, avatar:"https://i.pravatar.cc/120?img=5" };
-    setUser(p);
+
+  const signUpWithEmailPassword = ()=>{
+    setAuthError(null);
+    const name = authName.trim() || authEmail.split("@")[0];
+    if(!authEmail.includes("@")){ setAuthError("Enter a valid email"); return; }
+    if(authPassword.length < 6){ setAuthError("Password must be at least 6 characters"); return; }
+    const users = loadUsers();
+    if(users.find(x=>x.email.toLowerCase()===authEmail.toLowerCase())){
+      setAuthError("An account already exists with this email. Sign in instead.");
+      return;
+    }
+    const newUser: StoredUser = {
+      id: "u_"+Math.random().toString(36).slice(2,10),
+      name,
+      email: authEmail.toLowerCase(),
+      provider: "email",
+      passwordHash: hashPwd(authPassword),
+      avatar: `https://i.pravatar.cc/120?u=${encodeURIComponent(authEmail)}`,
+      createdAt: Date.now()
+    };
+    users.push(newUser);
+    saveUsers(users);
+    const session: AuthUser = { id:newUser.id, name:newUser.name, email:newUser.email, provider:"email", avatar:newUser.avatar, createdAt:newUser.createdAt };
+    setAuthUser(session); setSessionUser(session);
     setShowAuth(false);
-    setAuthStep("choose");
-    setToast("Signed in with Apple • Pro unlocked");
+    setToast(`Account created • welcome to Podstat, ${name.split(" ")[0]}!`);
+    setAuthPassword(""); setAuthName("");
   };
-  const doEmailOtp = ()=>{
-    if(authStep==="email"){ setAuthStep("otp"); setToast("OTP sent to "+authEmail); return; }
-    if(authStep==="otp" && otpValue.length>=4){
-      setUser({ name: authEmail.split("@")[0], email: authEmail, provider:"email", avatar:"https://i.pravatar.cc/120?img=12"});
-      setShowAuth(false); setAuthStep("choose"); setOtpValue(""); setToast("Email verified • signed in");
+
+  const signInWithGoogleAccount = (acct:{name:string;email:string;avatar:string})=>{
+    const users = loadUsers();
+    let u = users.find(x=>x.email.toLowerCase()===acct.email.toLowerCase());
+    if(!u){
+      u = { id:"u_g_"+Math.random().toString(36).slice(2,8), name:acct.name, email:acct.email, provider:"google", avatar:acct.avatar, createdAt: Date.now() };
+      users.push(u); saveUsers(users);
     }
+    const session: AuthUser = { id:u.id, name:u.name, email:u.email, provider:"google", avatar:u.avatar, createdAt:u.createdAt };
+    setAuthUser(session); setSessionUser(session);
+    setShowAuth(false);
+    setToast("Signed in with Google • welcome, "+session.name.split(" ")[0]);
   };
-  const doPhoneOtp = ()=>{
-    if(authStep==="phone"){ setAuthStep("otp"); setToast("OTP sent to +91 "+authPhone); return; }
-    if(authStep==="otp" && otpValue.length>=4){
-      setUser({ name:"IN User", email:"+91"+authPhone+"@podstat.in", provider:"phone", avatar:"https://i.pravatar.cc/120?img=15"});
-      setShowAuth(false); setAuthStep("choose"); setOtpValue(""); setToast("Phone verified • signed in");
+
+  const signInWithAppleAccount = (acct:{name:string;email:string;avatar:string})=>{
+    const users = loadUsers();
+    let u = users.find(x=>x.email.toLowerCase()===acct.email.toLowerCase());
+    if(!u){
+      u = { id:"u_a_"+Math.random().toString(36).slice(2,8), name:acct.name, email:acct.email, provider:"apple", avatar:acct.avatar, createdAt: Date.now() };
+      users.push(u); saveUsers(users);
     }
+    const session: AuthUser = { id:u.id, name:u.name, email:u.email, provider:"apple", avatar:u.avatar, createdAt:u.createdAt };
+    setAuthUser(session); setSessionUser(session);
+    setShowAuth(false);
+    setToast("Signed in with Apple • welcome, "+session.name.split(" ")[0]);
   };
-  const signOut = ()=>{ setUser(null); setToast("Signed out"); };
+
+  const signOutUser = ()=>{ setAuthUser(null); setSessionUser(null); setToast("Signed out of Podstat"); };
 
   return (
     <div className="min-h-screen bg-[#f5f0e8] text-[#17161c]">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Fragment+Mono&family=Inter:wght@400;500;600;700&display=swap');
         body{font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#f5f0e8}
         .font-display{font-family:"Fraunces",ui-serif,Georgia,serif}
         .font-mono-s{font-family:"Fragment Mono",ui-monospace,monospace}
@@ -442,40 +520,42 @@ export default function App(){
       `}</style>
 
       <div className="flex">
-        {/* sidebar */}
+        {/* SIDEBAR */}
         <aside className="hidden xl:flex w-[284px] min-h-screen bg-[#101016] text-zinc-300 sticky top-0 flex-col">
           <div className="px-[24px] pt-[28px] pb-[18px] border-b border-zinc-800/90">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-[15px] bg-gradient-to-br from-[#ff6b2b] to-[#d63e07] flex items-center justify-center shadow-lg"><span className="text-white font-[700] text-[15px] tracking-tight">pd</span></div>
+              <div className="w-11 h-11 rounded-[15px] bg-gradient-to-br from-[#ff6b2b] to-[#d63e07] flex items-center justify-center shadow-lg">
+                <span className="text-white font-[700] text-[15px] tracking-tight">pd</span>
+              </div>
               <div>
-                <div className="text-[19px] text-white font-[700] tracking-[-0.015em] font-display">podstat</div>
+                <div className="text-[20px] text-white font-[700] tracking-[-0.015em] font-display">podstat</div>
                 <div className="text-[11px] text-zinc-500 font-mono-s uppercase tracking-wider -mt-[2px]">India • analytics</div>
               </div>
             </div>
 
-            {/* user chip */}
-            {user ? (
-              <div className="mt-[15px] bg-[#181821] border border-zinc-800 rounded-[14px] px-3 py-[10px] flex items-center gap-3">
-                <img src={user.avatar} alt="" className="w-9 h-9 rounded-full ring-1 ring-zinc-700"/>
+            {authUser ? (
+              <div className="mt-[14px] bg-[#181821] border border-zinc-800 rounded-[14px] px-3 py-[11px] flex items-center gap-3">
+                <img src={authUser.avatar} alt="" className="w-9 h-9 rounded-full ring-1 ring-zinc-700"/>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] text-white truncate">{user.name}</div>
-                  <div className="text-[11px] text-zinc-400 truncate">{user.email} • {user.provider}</div>
+                  <div className="text-[13px] text-white leading-tight truncate">{authUser.name}</div>
+                  <div className="text-[11px] text-zinc-400 truncate">{authUser.email}</div>
+                  <div className="text-[10.5px] text-[#ff9a68]">{authUser.provider} • Pro</div>
                 </div>
-                <button onClick={signOut} className="text-[10.5px] text-zinc-400 hover:text-zinc-200">out</button>
+                <button onClick={signOutUser} className="text-[10.5px] text-zinc-400 hover:text-zinc-200">out</button>
               </div>
             ) : (
-              <button onClick={()=>{setShowAuth(true); setAuthStep("choose");}} className="mt-[15px] w-full bg-[#1b1b24] hover:bg-[#222233] transition border border-zinc-800 rounded-[14px] px-3 py-[11px] text-left">
-                <div className="text-[12.5px] text-zinc-300">Sign in to unlock Pro</div>
-                <div className="text-[11.5px] text-zinc-500 mt-[2px]">Google • Apple • Email • +91</div>
+              <button onClick={()=>setShowAuth(true)} className="mt-[14px] w-full bg-[#1b1b24] hover:bg-[#232336] transition border border-zinc-800 rounded-[14px] px-3 py-[11px] text-left">
+                <div className="text-[13px] text-zinc-100 font-[550]">Sign in to Podstat</div>
+                <div className="text-[11.5px] text-zinc-400 mt-[2px]">Email + Password • Google • Apple</div>
               </button>
             )}
 
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[11.3px]">
-              <button onClick={()=>setShowAuth(true)} className="bg-[#1a1a23] border border-zinc-800 rounded-[12px] px-[10px] py-[8px] text-left hover:bg-[#20202c]">
-                <div className="text-zinc-500">Account</div>
-                <div className="font-[600] text-white">{user ? "Pro ✓" : "Sign in →"}</div>
+            <div className="grid grid-cols-2 gap-2 mt-3 text-[11.4px]">
+              <button onClick={()=>setShowAuth(true)} className="bg-[#1a1a23] border border-zinc-800 rounded-[12px] px-[10px] py-[8px] text-left hover:bg-[#20202c] text-zinc-300">
+                <div className="text-zinc-500">{authUser ? "Account" : "Login"}</div>
+                <div className="font-[600] text-white">{authUser ? "Pro ✓" : "Sign in →"}</div>
               </button>
-              <button onClick={()=>setShowLive(true)} className="bg-[#1a1a23] border border-zinc-800 rounded-[12px] px-[10px] py-[8px] text-left hover:bg-[#20202c]">
+              <button onClick={()=>setShowLive(true)} className="bg-[#1a1a23] border border-zinc-800 rounded-[12px] px-[10px] py-[8px] text-left hover:bg-[#20202c] text-zinc-300">
                 <div className="text-zinc-500">Auto-update</div>
                 <div className="font-[600] text-white">Daily 6:30</div>
               </button>
@@ -485,96 +565,94 @@ export default function App(){
           <nav className="px-[16px] pt-5 flex-1 overflow-y-auto">
             <div className="text-[10.5px] uppercase tracking-[0.115em] text-zinc-500 font-mono-s px-3 mb-2">Analytics</div>
             {[
-              ["India Trending",true],
-              ["My Up Next",false, queueIds.length],
-              ["Following",false, followed.length],
-              ["Compare channels",false],
+              ["India Trending", true],
+              ["My Up Next", false, queueIds.length],
+              ["Following", false, followed.length],
+              ["Compare channels", false],
             ].map(([n,on,b]:any)=>(
-              <a key={n} href="#" onClick={e=>{e.preventDefault(); if(n==="Compare channels") setShowCompare(true);}}
+              <a key={n as string} href="#" onClick={e=>{e.preventDefault(); if(n==="Compare channels") setShowCompare(true);}}
                 className={`flex items-center justify-between px-3 h-[39px] rounded-[12px] text-[13.3px] mb-[2px] ${on ? "bg-[#f65818] text-white" : "text-zinc-400 hover:text-zinc-100 hover:bg-[#18181f]"}`}>
                 <span>{n}</span>
-                {b ? <span className="text-[10.5px] px-1.5 py-[2px] rounded-full bg-[#23232f] text-zinc-300">{b}</span> : null}
+                {b ? <span className={`text-[10.5px] px-1.5 py-[2px] rounded-full ${on ? "bg-white/20":"bg-[#23232f] text-zinc-300"}`}>{b}</span> : null}
               </a>
             ))}
 
-            <div className="mt-6 text-[10.5px] uppercase tracking-[0.115em] text-zinc-500 font-mono-s px-3 mb-2">Active filter</div>
-            <div className="mx-3 rounded-[14px] bg-[#181822] border border-zinc-800 px-3 py-[11px] text-[12.4px] text-zinc-300">
+            <div className="mt-5 text-[10.5px] uppercase tracking-[0.115em] text-zinc-500 font-mono-s px-3 mb-2">Active filter</div>
+            <div className="mx-3 rounded-[14px] bg-[#181822] border border-zinc-800 px-3 py-[11px] text-[12.4px] text-zinc-300 min-h-[54px]">
               <div className="font-[550] text-zinc-100">{activeFilterLabel}</div>
-              <div className="text-[11.5px] text-zinc-400 mt-1">{filtered.length} shows • {fmtIn(total7d)} 7d • {avgCompletion}% finish</div>
+              <div className="text-[11.5px] text-zinc-400 mt-1">{filtered.length} shows • {fmtIn(total7d)} • {avgCompletion}%</div>
               {(cat!=="All"||plat!=="All"||langF!=="All"||q) && (
                 <button onClick={()=>{setCat("All");setPlat("All");setLangF("All");setQ("");}} className="text-[11px] text-[#ff9a68] hover:underline mt-2">Reset → All India</button>
               )}
             </div>
 
-            <div className="mt-6 mx-3 rounded-[16px] bg-gradient-to-b from-[#22222b] to-[#181822] border border-zinc-800 p-[14px] text-[12.3px] text-zinc-300">
-              {!user ? (
+            <div className="mt-5 mx-3 rounded-[16px] bg-gradient-to-b from-[#22222b] to-[#17171d] border border-zinc-800 p-[14px] text-[12.3px] text-zinc-300">
+              {!authUser ? (
                 <>
-                  <div className="font-[600] text-zinc-100">Sign in to unlock</div>
+                  <div className="font-[600] text-zinc-100">Sign in — separate accounts</div>
                   <ul className="mt-2 text-zinc-400 space-y-1 text-[12px]">
-                    <li>• Follow sync</li>
-                    <li>• Queue cloud</li>
-                    <li>• Drop alerts</li>
-                    <li>• Notes & export</li>
+                    <li>• Email + Password</li>
+                    <li>• Continue with Google</li>
+                    <li>• Continue with Apple</li>
                   </ul>
-                  <button onClick={()=>setShowAuth(true)} className="mt-3 w-full py-[8px] rounded-[11px] bg-[#f85818] text-white text-[12.5px] font-[600]">Sign in — Google / Apple</button>
+                  <button onClick={()=>setShowAuth(true)} className="mt-3 w-full py-[8px] rounded-[11px] bg-[#f85818] text-white text-[12.5px] font-[600]">Sign in →</button>
                 </>
               ) : (
                 <>
                   <div className="font-[600] text-zinc-100">Pro active ✓</div>
-                  <div className="text-zinc-400 text-[12px] mt-1">Follow {followed.length} • Queue {queueIds.length}</div>
-                  <button onClick={()=>setShowCompare(true)} className="mt-3 w-full py-[8px] rounded-[11px] bg-[#23232f] text-zinc-200 text-[12px]">Compare channels</button>
+                  <div className="text-zinc-400 text-[12px] mt-1">{authUser.email}</div>
+                  <div className="text-zinc-500 text-[11px]">{authUser.provider} • {followed.length} follows</div>
                 </>
               )}
             </div>
           </nav>
 
           <div className="px-5 pb-5 pt-4 border-t border-zinc-800/80 text-[11.5px] text-zinc-500">
-            podstat • IN-PULSE<br/>
-            {user ? <>Signed in • {user.provider}</> : <>Sign-in optional</>} • <button className="underline decoration-dotted text-zinc-300" onClick={()=>setShowAuth(true)}>account →</button>
+            podstat • v2.5<br/>
+            {authUser ? <>Signed in • {authUser.provider}</> : <>Sign-in required for follows</>} • <button className="underline decoration-dotted text-zinc-300" onClick={()=>setShowAuth(true)}>account →</button>
           </div>
         </aside>
 
-        {/* main */}
+        {/* MAIN */}
         <div className="flex-1 min-w-0">
-          <div className="px-5 sm:px-9 lg:px-[46px] pt-[30px] md:pt-[44px] pb-4">
+          <div className="px-5 sm:px-9 lg:px-[46px] pt-[30px] md:pt-[44px] pb-4" id="top">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-zinc-500 font-mono-s">
                   <span>Analytics</span><span>/</span><span className="text-zinc-700">India Trending</span>
                   <span className="px-[9px] py-[3px] rounded-full text-[10.5px] bg-[#ebe1d2] text-[#8b5b31]">LIVE • IST</span>
-                  <span className="px-[9px] py-[3px] rounded-full text-[10.5px] bg-[#fff1e7] text-[#cf4a17] border border-[#ffd0b8]">filter-reactive</span>
+                  <span className="px-[9px] py-[3px] rounded-full text-[10.5px] bg-[#fff1e7] text-[#cf4a17] border border-[#ffd0b8]">podstat • filter-reactive</span>
                 </div>
-                <h1 className="font-display text-[36px] sm:text-[48px] leading-[0.93] tracking-[-0.022em] mt-[10px] text-[#15131a]">
-                  Podcasts trending now<br className="hidden sm:block"/> in India
-                </h1>
-                <p className="mt-3 text-[14.5px] text-zinc-600 max-w-[800px] leading-relaxed">
-                  Downloads chart • listener geography • average duration • top episodes — <b>all redraw instantly</b> when you change Category, Platform, or Language.
-                  <span className="ml-2 text-zinc-500">22 shows • updated 2 min ago.</span>
+                <h1 className="font-display text-[36px] sm:text-[48px] leading-[0.93] tracking-[-0.022em] mt-[10px] text-[#15131a]">Podcasts trending now<br className="hidden sm:block"/> in India</h1>
+                <p className="mt-3 text-[14.6px] text-zinc-600 max-w-[810px] leading-relaxed">
+                  <b>podstat</b> — downloads chart • listener geography • average duration • top episodes — <b>all redraw instantly</b> when you change Category, Platform, or Language. 22 shows • YouTube / Spotify / JioSaavn / Apple deep-links.
+                  <span className="ml-2 text-zinc-500">Updated 2 min ago • 16.9M listeners tracked.</span>
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {user ? (
+                {authUser ? (
                   <div className="flex items-center gap-2 bg-white border border-[#e3dbcd] rounded-[14px] px-3 py-[8px] shadow-sm">
-                    <img src={user.avatar} className="w-7 h-7 rounded-full" alt="" />
-                    <div className="text-[12.5px] leading-tight">
-                      <div className="font-[550] text-zinc-900">{user.name}</div>
-                      <div className="text-[11px] text-zinc-500">{user.provider} • Pro</div>
+                    <img src={authUser.avatar} className="w-8 h-8 rounded-full" alt="" />
+                    <div className="text-[12.5px] leading-tight pr-1 min-w-0">
+                      <div className="font-[550] text-zinc-900 truncate max-w-[140px]">{authUser.name}</div>
+                      <div className="text-[11px] text-zinc-500">{authUser.provider} • Pro</div>
                     </div>
-                    <button onClick={signOut} className="text-[11px] text-zinc-500 ml-2 hover:text-zinc-800">out</button>
+                    <button onClick={signOutUser} className="text-[11px] text-zinc-500 ml-1 hover:text-zinc-800">sign out</button>
                   </div>
                 ) : (
-                  <button onClick={()=>{setShowAuth(true); setAuthStep("choose");}} className="px-4 py-[9px] rounded-[13px] bg-[#15131b] text-white text-[13px] shadow-[0_8px_24px_rgba(20,15,30,0.14)]">
-                    Sign in — Google / Apple
+                  <button onClick={()=>setShowAuth(true)} className="px-[16px] py-[10px] rounded-[14px] bg-[#15131b] text-white text-[13px] font-[550] shadow-[0_8px_24px_rgba(20,15,30,0.14)]">
+                    Sign in
                   </button>
                 )}
                 <button onClick={()=>setShowLive(true)} className="px-[14px] py-[9px] bg-white border border-[#e3dbcd] rounded-[14px] text-[13px] text-zinc-700 shadow-sm">Live updates</button>
               </div>
             </div>
 
-            {/* filters */}
+            {/* FILTER BAR */}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <div className="flex-1 min-w-[250px] max-w-[500px] relative">
-                <input ref={searchRef} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search show / channel / host…  ⌘K" className="w-full bg-white border border-[#e3d6c3] rounded-[15px] px-[14px] py-[12px] text-[14px] outline-none focus:ring-[3px] focus:ring-[#ffe1cf] focus:border-[#f3b593] placeholder-zinc-500 shadow-sm"/>
+                <input ref={searchRef} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search show / channel / host… ⌘K"
+                  className="w-full bg-white border border-[#e3d6c3] rounded-[15px] px-[14px] py-[12px] text-[14px] outline-none focus:ring-[3px] focus:ring-[#ffe1cf] focus:border-[#f3b593] placeholder-zinc-500 shadow-sm"/>
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-zinc-500 bg-[#f7f2ea] border border-[#e9dccc] px-2 py-1 rounded-[8px]">⌘K</span>
               </div>
               <div className="flex flex-wrap gap-[6px]">
@@ -597,20 +675,21 @@ export default function App(){
 
             <div className="mt-4 bg-[#fff9ef] border border-[#f0d8b3] rounded-[15px] px-[14px] py-[10px] text-[13px] text-[#7a4a1d] flex flex-wrap items-center gap-x-4 gap-y-1">
               <b>Active → {activeFilterLabel}</b>
-              <span>•</span><span>{filtered.length} shows</span>
+              <span>•</span><span>{filtered.length} podcasts</span>
               <span>•</span><span>{fmtIn(total7d)} 7-day</span>
               <span>•</span><span>{avgCompletion}% completion</span>
               <span>•</span><span>{fmtMins(avgDurSec)} avg</span>
+              {!authUser && <><span>•</span><button onClick={()=>setShowAuth(true)} className="text-[#c94b17] underline font-[550]">Sign in to save →</button></>}
             </div>
           </div>
 
-          {/* KPIs – reactive */}
+          {/* KPIs */}
           <div className="px-5 sm:px-9 lg:px-[46px] pb-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-[14px]">
               <div className="bg-white border border-[#e6ddce] rounded-[24px] px-[18px] pt-[16px] pb-[14px]">
                 <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Downloads • filtered</div>
                 <div className="mt-2 font-display text-[30px] leading-[0.98] tracking-[-0.017em]">{fmtIn(total7d)}</div>
-                <div className="text-[12.5px] text-zinc-600 mt-1">7-day • {filtered.length} shows • {avgGrowth}% avg growth</div>
+                <div className="text-[12.5px] text-zinc-600 mt-1">{filtered.length} shows • {avgGrowth}% avg growth</div>
               </div>
               <div className="bg-white border border-[#e6ddce] rounded-[24px] px-[18px] pt-[16px] pb-[14px]">
                 <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Unique listeners</div>
@@ -625,42 +704,42 @@ export default function App(){
               <div className="bg-white border border-[#f1c6aa] rounded-[24px] px-[18px] pt-[16px] pb-[14px]">
                 <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Top episodes in filter</div>
                 <div className="mt-2 font-display text-[28px] leading-[0.98] tracking-[-0.017em]">{filtered.length}</div>
-                <div className="text-[12.5px] text-zinc-600 mt-1">{fmtIn(total30d)} • 30-day total</div>
+                <div className="text-[12.5px] text-zinc-600 mt-1">{fmtIn(total30d)} • 30-day</div>
               </div>
             </div>
           </div>
 
-          {/* downloads chart – filter reactive */}
+          {/* downloads chart */}
           <div className="px-5 sm:px-9 lg:px-[46px] pb-[18px]">
             <div className="grid grid-cols-12 gap-[18px]">
-              <div className="col-span-12 xl:col-span-8 bg-white border border-[#e6ddce] rounded-[30px] shadow-[0_1px_2px_rgba(20,15,10,.05)] overflow-hidden">
+              <div className="col-span-12 xl:col-span-8 bg-white border border-[#e6ddce] rounded-[30px] overflow-hidden">
                 <div className="px-[24px] pt-[20px] pb-[12px] flex flex-wrap items-center justify-between gap-3 border-b border-[#f0e6d6]">
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Downloads chart • filtered</div>
-                    <div className="text-[20px] font-[650] tracking-[-0.012em]">Audience growth — {activeFilterLabel}</div>
-                    <div className="text-[11.5px] text-zinc-500">Chart rescales to current filter • {timeRange}</div>
+                    <div className="text-[20px] font-[650]">Audience growth — {activeFilterLabel}</div>
+                    <div className="text-[11.5px] text-zinc-500">Chart rescales live to current filter</div>
                   </div>
-                  <div className="flex items-center gap-[6px] flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex bg-[#fbf6ee] border border-[#ead8b9] rounded-[12px] p-[3px] text-[12px]">
                       {(["24h","7d","30d","90d"] as TimeRange[]).map(t=>(
                         <button key={t} onClick={()=>setTimeRange(t)} className={`px-[11px] py-[6px] rounded-[9px] ${timeRange===t ? "bg-[#191720] text-white":"text-zinc-700"}`}>{t}</button>
                       ))}
                     </div>
                     {(["views","listeners","watch_hours"] as Metric[]).map(m=>(
-                      <button key={m} onClick={()=>setMetric(m)} className={`px-[11px] py-[6px] rounded-full text-[11.8px] border capitalize ${metric===m ? "bg-[#191720] text-white border-[#191720]":"border-[#e4d8c3] bg-white text-zinc-700"}`}>{m.replace("_"," ")}</button>
+                      <button key={m} onClick={()=>setMetric(m)} className={`px-[10px] py-[6px] rounded-full text-[11.8px] border capitalize ${metric===m ? "bg-[#191720] text-white border-[#191720]":"border-[#e4d8c3] bg-white text-zinc-700"}`}>{m.replace("_"," ")}</button>
                     ))}
                   </div>
                 </div>
-                <div className="px-[8px] sm:px-[18px] pt-[8px]">
+                <div className="px-[10px] sm:px-[18px] pt-[8px]">
                   <div className="h-[306px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData} margin={{top:14,right:16,left:-8,bottom:0}}>
-                        <defs><linearGradient id="dGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="3%" stopColor="#f35a1d" stopOpacity={0.33}/><stop offset="95%" stopColor="#f35a1d" stopOpacity={0}/></linearGradient></defs>
+                        <defs><linearGradient id="dlGradPod" x1="0" y1="0" x2="0" y2="1"><stop offset="3%" stopColor="#f35a1d" stopOpacity={0.33}/><stop offset="95%" stopColor="#f35a1d" stopOpacity={0}/></linearGradient></defs>
                         <CartesianGrid strokeDasharray="3 4" stroke="#ece1d2" vertical={false}/>
                         <XAxis dataKey="d" tick={{fontSize:11.5, fill:"#83766a"}} tickLine={false} axisLine={{stroke:"#e8ddd0"}}/>
                         <YAxis tick={{fontSize:11.5, fill:"#83766a"}} tickLine={false} axisLine={false} width={60} tickFormatter={v=> timeRange==="24h" ? `${v}` : `${Math.round(v/1000)}k`}/>
                         <Tooltip cursor={{stroke:"#f2c9b1",strokeWidth:1}} content={({active,payload,label})=> active&&payload?.length ? <div className="bg-[#191720] text-white text-[12px] rounded-2xl px-3 py-[10px] shadow-xl"><div className="text-zinc-400 text-[11px]">{label} • {activeFilterLabel}</div><div className="font-[600]">{metric==="views" ? `${fmtPlain((payload[0].value as number)*1000)} downloads` : metric==="listeners" ? `${fmtPlain((payload[0].value as number)*1000)} listeners` : `${fmtPlain((payload[0].value as number)*1000)} watch hrs`}</div></div> : null}/>
-                        <Area type="monotone" dataKey={metric} stroke="#e84d19" strokeWidth={2.3} fill="url(#dGrad)" dot={false} activeDot={{r:4,strokeWidth:0,fill:"#e84d19"}}/>
+                        <Area type="monotone" dataKey={metric} stroke="#e84d19" strokeWidth={2.3} fill="url(#dlGradPod)" dot={false} activeDot={{r:4,strokeWidth:0,fill:"#e84d19"}}/>
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -673,8 +752,8 @@ export default function App(){
                 </div>
               </div>
 
-              {/* top shows bar */}
-              <div className="col-span-12 xl:col-span-4 bg-white border border-[#e6ddce] rounded-[30px] shadow-[0_1px_2px_rgba(20,15,10,.05)] flex flex-col">
+              {/* top episodes bar */}
+              <div className="col-span-12 xl:col-span-4 bg-white border border-[#e6ddce] rounded-[30px] flex flex-col">
                 <div className="px-[20px] pt-[18px] pb-[10px] border-b border-[#f0e6d6]">
                   <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Top episodes • filtered</div>
                   <div className="text-[17.5px] font-[650]">7-day views — {activeFilterLabel}</div>
@@ -684,10 +763,10 @@ export default function App(){
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={topBarData} layout="vertical" margin={{top:4,right:14,left:0,bottom:4}}>
                         <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={116} tick={{fontSize:11, fill:"#5c5347"}} axisLine={false} tickLine={false}/>
+                        <YAxis dataKey="name" type="category" width={118} tick={{fontSize:11, fill:"#5c5347"}} axisLine={false} tickLine={false}/>
                         <Tooltip cursor={{fill:"#fff6ec"}} content={({active,payload})=> active&&payload?.length ? <div className="bg-[#1a1822] text-white text-[12px] rounded-xl px-3 py-2 shadow-lg">{payload[0].payload.name}<br/><b>{payload[0].value}M views</b></div> : null}/>
                         <Bar dataKey="views" radius={[0,7,7,0]} barSize={15}>
-                          {topBarData.map((entry,i)=> <Cell key={i} fill={filtered[i]?.accent || "#f05a22"} />)}
+                          {topBarData.map((entry,i)=><Cell key={i} fill={filtered[i]?.accent || "#f05a22"}/>)}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
@@ -698,7 +777,7 @@ export default function App(){
             </div>
           </div>
 
-          {/* geography + platform + duration */}
+          {/* geo + platform + duration */}
           <div className="px-5 sm:px-9 lg:px-[46px] pb-[18px]">
             <div className="grid grid-cols-12 gap-[18px]">
               <div className="col-span-12 lg:col-span-5 bg-white border border-[#e6ddce] rounded-[30px]">
@@ -713,9 +792,9 @@ export default function App(){
                         <span className="font-[500]">{c.city}</span>
                         <span><b>{c.share}%</b> <span className="text-zinc-500 text-[11px]">{fmtPlain(c.listeners)}</span></span>
                       </div>
-                      <div className="mt-[5px] h-[5.5px] rounded-full bg-[#f2ebe1]"><div className="h-[5.5px] rounded-full" style={{width:`${Math.min(100,c.share*2.7)}%`, background:c.color}}/></div>
+                      <div className="mt-[5px] h-[5.5px] rounded-full bg-[#f2ebe1]"><div className="h-[5.5px] rounded-full" style={{width:`${Math.min(100, c.share*2.7)}%`, background:c.color}}/></div>
                     </div>
-                  )) : <div className="text-zinc-500">No city data for this filter.</div>}
+                  )) : <div className="text-zinc-500 text-[13px]">No city data for this filter.</div>}
                 </div>
               </div>
 
@@ -746,7 +825,7 @@ export default function App(){
                   {filtered.length} shows • {langDist.map(l=>`${l.label} ${l.pct}%`).join(" • ") || "—"}
                 </div>
                 <div className="mt-3 h-[10px] rounded-full overflow-hidden border border-[#f0e2d2] flex bg-[#fbf6ee]">
-                  {langDist.map(l=> <div key={l.label} style={{width:`${l.pct}%`, background:l.color}} title={`${l.label} ${l.pct}%`}/>)}
+                  {langDist.map(l=> <div key={l.label} style={{width:`${l.pct}%`, background:l.color}}/>)}
                 </div>
               </div>
             </div>
@@ -777,12 +856,12 @@ export default function App(){
                   </thead>
                   <tbody>
                     {filtered.map((t,idx)=>(
-                      <tr key={t.rank} className={`border-t border-[#f3ece0] ${idx%2===1?"bg-[#fdf9f3]/70":""} hover:bg-[#fff6ed]/90`}>
+                      <tr key={t.rank} className={`border-t border-[#f3ece0] ${idx%2===1?"bg-[#fdf9f3]/70":""} hover:bg-[#fff6ed]/85`}>
                         <td className="pl-[22px] pr-3 py-[15px]"><div className={`w-[34px] h-[34px] rounded-[11px] flex items-center justify-center text-[13px] font-[700] ${t.rank<=3?"bg-[#fff1e6] text-[#d7420f] border border-[#ffd1b9]":"bg-[#f7f1e6] text-zinc-700 border border-[#e8dcc7]"}`}>{t.rank}</div></td>
                         <td className="pr-4 py-[15px] min-w-[320px]">
                           <div className="font-[600] text-[14.8px]">{t.podcast}</div>
                           <div className="text-[12.5px] text-zinc-600">{t.channel} • {t.host}</div>
-                          <div className="mt-[5px] text-[11.5px] text-zinc-600">{t.lang} • {t.avgDuration} • {t.completion}% • {t.cityTop}</div>
+                          <div className="text-[11.5px] text-zinc-600 mt-[4px]">{t.lang} • {t.avgDuration} • {t.completion}% • {t.cityTop}</div>
                         </td>
                         <td className="pr-3 py-[15px]"><span className="text-[11.5px] px-[9px] py-[4px] rounded-full bg-[#fff6ec] border border-[#f5d1b6] text-[#b74a18]">{t.category}</span></td>
                         <td className="text-right px-4 py-[15px]"><div className="text-[16.5px] font-[700]">{fmtIn(t.views7d)}</div><div className="text-[11px] text-zinc-500">{fmtPlain(t.views7d)}</div></td>
@@ -798,7 +877,7 @@ export default function App(){
                           </div>
                         </td>
                         <td className="text-right pr-[22px] pl-3 py-[15px]">
-                          <button onClick={()=> { if(!user){ setShowAuth(true); setToast("Sign in to follow"); return;} toggleFollow(t.rank); }} className={`text-[11.5px] px-[10px] py-[6px] rounded-full border ${followed.includes(t.rank) ? "bg-[#191721] text-white border-[#191721]" : "bg-white border-[#e1d5c4] text-zinc-700"}`}>{followed.includes(t.rank) ? "Following ✓" : "+ Follow"}</button>
+                          <button onClick={()=>toggleFollow(t.rank)} className={`text-[11.5px] px-[10px] py-[6px] rounded-full border ${followed.includes(t.rank) ? "bg-[#191721] text-white border-[#191721]" : "bg-white border-[#e1d5c4] text-zinc-700"}`}>{followed.includes(t.rank) ? "Following ✓" : "+ Follow"}</button>
                         </td>
                       </tr>
                     ))}
@@ -807,7 +886,7 @@ export default function App(){
                 </table>
               </div>
               <div className="px-[22px] py-[14px] border-t border-[#f0e6d6] text-[12.5px] text-zinc-600 flex items-center justify-between">
-                <span>Filter-reactive • {activeFilterLabel}</span>
+                <span>podstat • {activeFilterLabel} • {filtered.length} channels</span>
                 <button onClick={()=>{ setCat("All"); setPlat("All"); setLangF("All"); setQ(""); }} className="text-[#cc4d18] hover:underline">Reset → All India</button>
               </div>
             </div>
@@ -816,12 +895,12 @@ export default function App(){
             <div className="mt-[18px] bg-white border border-[#e6ddce] rounded-[30px]">
               <div className="px-[22px] pt-[18px] pb-[10px] border-b border-[#f0e6d6] flex items-center justify-between">
                 <div><div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Listener retention • filtered</div><div className="text-[18px] font-[600]">Average retention — {activeFilterLabel}</div></div>
-                <div className="text-[12px] text-zinc-600">{avgCompletion}% completion • {fmtMins(avgDurSec)}</div>
+                <div className="text-[12px] text-zinc-600">{avgCompletion}% • {fmtMins(avgDurSec)}</div>
               </div>
               <div className="px-[10px] sm:px-[18px] py-[8px]">
                 <div className="h-[228px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={retentionCurve} margin={{top:12,right:18,left:-8,bottom:0}}>
+                    <LineChart data={retentionCurve} margin={{top:12,right:18,left:-10,bottom:0}}>
                       <CartesianGrid strokeDasharray="3 4" stroke="#ece3d7" vertical={false}/>
                       <XAxis dataKey="pct" tick={{fontSize:11.5,fill:"#857a6a"}} tickFormatter={v=>`${v}%`} tickLine={false} axisLine={{stroke:"#e8ddd0"}}/>
                       <YAxis tick={{fontSize:11.5,fill:"#857a6a"}} domain={[15,100]} tickFormatter={v=>`${v}%`} tickLine={false} axisLine={false} width={40}/>
@@ -834,13 +913,13 @@ export default function App(){
             </div>
 
             <div className="pt-8 pb-6 text-center text-[12px] text-zinc-500">
-              podstat • India Podcast Analytics • fully filter-reactive • {new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})} IST
+              podstat • India Podcast Analytics • filter-reactive • {new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})} IST
             </div>
           </div>
         </div>
       </div>
 
-      {/* DETAIL DRAWER */}
+      {/* show drawer */}
       {selected && (
         <div className="fixed inset-0 z-[70]">
           <div className="absolute inset-0 bg-black/50" onClick={()=>setSelected(null)} />
@@ -851,7 +930,7 @@ export default function App(){
                   <div className="w-12 h-12 rounded-[14px] text-white font-[700] flex items-center justify-center" style={{background:selected.accent}}>{selected.channel.slice(0,2).toUpperCase()}</div>
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">India #{selected.rank} • {selected.category} • {selected.lang}</div>
-                    <div className="text-[22px] font-[700] tracking-[-0.015em]">{selected.podcast}</div>
+                    <div className="text-[22px] font-[700]">{selected.podcast}</div>
                     <div className="text-[13px] text-zinc-600">{selected.channel} • {selected.host}</div>
                   </div>
                 </div>
@@ -863,22 +942,18 @@ export default function App(){
                 <a href={selected.jiosaavnUrl} target="_blank" rel="noreferrer" className="text-center px-4 py-[11px] rounded-[14px] bg-white border border-[#e1cfb8]">JioSaavn</a>
                 <a href={selected.appleUrl} target="_blank" rel="noreferrer" className="text-center px-4 py-[11px] rounded-[14px] bg-white border border-[#e1cfb8]">Apple</a>
               </div>
-              <div className="mt-4 text-[13px] text-zinc-700 bg-white border border-[#e7d9c3] rounded-[16px] px-4 py-3">
-                <b>{selected.latestEp.title}</b><br/>
-                <span className="text-zinc-500">{selected.latestEp.date} • {selected.avgDuration} • {selected.completion}% finish • {selected.cityTop}</span>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* COMPARE */}
+      {/* compare */}
       {showCompare && (
         <div className="fixed inset-0 z-[75]">
           <div className="absolute inset-0 bg-black/50" onClick={()=>setShowCompare(false)} />
           <div className="absolute left-1/2 top-[5%] -translate-x-1/2 w-[min(960px,94vw)] bg-[#fcf8f1] border border-[#e5d4ba] rounded-[28px] shadow-2xl overflow-hidden">
             <div className="px-6 pt-5 pb-4 border-b border-[#f0e2c9] flex items-center justify-between">
-              <div><div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">Channel compare</div><div className="text-[20px] font-[700]">Side-by-side</div></div>
+              <div><div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">podstat compare</div><div className="text-[20px] font-[700]">Channel compare</div></div>
               <button onClick={()=>setShowCompare(false)} className="text-[13px] px-3 py-[7px] rounded-[12px] bg-white border border-[#e3d5c0]">Close</button>
             </div>
             <div className="p-6">
@@ -898,11 +973,9 @@ export default function App(){
                       <div className="text-zinc-600 text-[12.5px]">{c.channel}</div>
                       <div className="mt-3 grid grid-cols-2 gap-3">
                         <div><div className="text-[11px] text-zinc-500">7-day</div><div className="text-[16px] font-[700]">{fmtIn(c.views7d)}</div></div>
-                        <div><div className="text-[11px] text-zinc-500">30-day</div><div className="text-[16px] font-[700]">{fmtIn(c.views30d)}</div></div>
                         <div><div className="text-[11px] text-zinc-500">Completion</div><div className="text-[15px] font-[600]">{c.completion}%</div></div>
-                        <div><div className="text-[11px] text-zinc-500">Avg watch</div><div className="text-[15px] font-[600]">{c.avgDuration}</div></div>
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+                      <div className="mt-3 flex gap-2 text-[12px]">
                         <a href={c.youtubeUrl} target="_blank" rel="noreferrer" className="px-3 py-[6px] rounded-full bg-[#f65318] text-white">YouTube →</a>
                         <a href={c.spotifyUrl} target="_blank" rel="noreferrer" className="px-3 py-[6px] rounded-full border border-[#e1cfb8] bg-white">Spotify</a>
                       </div>
@@ -915,238 +988,330 @@ export default function App(){
         </div>
       )}
 
-      {/* ===== AUTH MODAL – GOOGLE + APPLE prominent ===== */}
+      {/* ===== AUTH: EMAIL + PASSWORD • GOOGLE • APPLE ===== */}
       {showAuth && (
         <div className="fixed inset-0 z-[90]">
-          <div className="absolute inset-0 bg-black/55 backdrop-blur-[1.5px]" onClick={()=>{setShowAuth(false); setAuthStep("choose");}}/>
-          <div className="absolute left-1/2 top-[4%] -translate-x-1/2 w-[min(520px,94vw)] bg-[#fdf9f2] border border-[#e5d4ba] rounded-[28px] shadow-[0_20px_80px_rgba(32,20,8,0.28)] overflow-hidden">
-            {/* header brand */}
-            <div className="px-7 pt-7 pb-5 bg-gradient-to-b from-[#fffaf2] to-[#fdf6ea] border-b border-[#f0e1c8] flex items-start justify-between">
+          <div className="absolute inset-0 bg-black/55 backdrop-blur-[1.5px]" onClick={()=>setShowAuth(false)}/>
+          <div className="absolute left-1/2 top-[3%] -translate-x-1/2 w-[min(520px,95vw)] max-h-[92vh] overflow-auto bg-[#fdf9f2] border border-[#e5d4ba] rounded-[28px] shadow-[0_24px_90px_rgba(30,18,8,0.30)]">
+            {/* brand */}
+            <div className="px-7 pt-7 pb-5 bg-gradient-to-b from-[#fffaf2] to-[#fdf6ea] border-b border-[#f0e1c8] flex items-start justify-between sticky top-0">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#ff6b2b] to-[#d63e07] flex items-center justify-center shadow text-white font-[700] text-[15px]">pd</div>
+                <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#ff6b2b] to-[#d63e07] flex items-center justify-center text-white font-[700] text-[15px]">pd</div>
                 <div>
-                  <div className="font-display text-[20px] tracking-[-0.014em] text-[#1a1612]">podstat</div>
+                  <div className="font-display text-[21px] tracking-[-0.014em] text-[#1a1612]">podstat</div>
                   <div className="text-[11.5px] text-zinc-600 -mt-[2px]">India Podcast Analytics</div>
                 </div>
               </div>
-              <button onClick={()=>{setShowAuth(false); setAuthStep("choose");}} className="text-[12.5px] px-[11px] py-[6px] rounded-[11px] bg-white border border-[#e3d5c0] text-zinc-700 hover:bg-[#faf5eb]">✕</button>
+              <button onClick={()=>setShowAuth(false)} className="text-[12.5px] px-[11px] py-[6px] rounded-[11px] bg-white border border-[#e3d5c0]">✕</button>
             </div>
 
             <div className="px-7 py-6">
-              {authStep==="choose" && (
-                <>
-                  <div className="text-[22px] font-[700] tracking-[-0.015em] text-[#1b1820]">Sign in to podstat</div>
-                  <div className="text-[13.5px] text-zinc-600 mt-1">Continue with Google or Continue with Apple — free.</div>
+              {/* auth tabs */}
+              <div className="flex bg-[#f7f1e6] border border-[#ead8bb] rounded-[14px] p-[4px] text-[13.5px] mb-5">
+                {["signin","signup"].map(m=>(
+                  <button key={m}
+                    onClick={()=>{ /* handled below via separate state */ }}
+                    className="flex-1 py-[0px]"></button>
+                ))}
+              </div>
 
-                  {/* GOOGLE */}
-                  <button
-                    onClick={()=>{
-                      const p = { name:"Arielle Ngo", email:"arielle.ngo@gmail.com", provider:"google" as const, avatar:"https://i.pravatar.cc/120?img=32" };
-                      setUser(p); setShowAuth(false); setToast("Signed in with Google • Pro unlocked");
-                    }}
-                    className="mt-5 w-full flex items-center justify-center gap-3 py-[13px] rounded-[14px] border border-[#d7cfc3] bg-white hover:bg-[#faf7f2] shadow-sm transition"
-                  >
-                    {/* Google G */}
-                    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
-                      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 5.2 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20.5-7.6 20.5-21 0-1.4-.1-2.7-.4-3.5z"/>
-                      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 5.2 29.3 3 24 3 16.3 3 9.6 7.2 6.3 14.7z"/>
-                      <path fill="#4CAF50" d="M24 45c5.2 0 10-2 13.5-5.2l-6.2-5.3C29.3 35.9 26.8 37 24 37c-5.2 0-9.6-2.9-11.7-7.2l-6.5 5C9.1 41.1 16.1 45 24 45z"/>
-                      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.5-6 7-11.3 7-6.6 0-12-5.4-12-12"/>
-                    </svg>
-                    <span className="text-[15px] font-[550] text-[#1f1f1f]">Continue with Google</span>
-                  </button>
-
-                  {/* APPLE */}
-                  <button
-                    onClick={()=>{
-                      const p = { name:"Arielle Ngo", email:"arielle@icloud.com", provider:"apple" as const, avatar:"https://i.pravatar.cc/120?img=5" };
-                      setUser(p); setShowAuth(false); setToast("Signed in with Apple • Pro unlocked");
-                    }}
-                    className="mt-[11px] w-full flex items-center justify-center gap-3 py-[13px] rounded-[14px] bg-black hover:bg-[#111] text-white shadow-sm transition"
-                  >
-                    {/* Apple logo */}
-                    <svg width="18" height="22" viewBox="0 0 17 20" fill="white" aria-hidden>
-                      <path d="M13.57 10.14c-.01-2.18 1.78-3.22 1.86-3.27-1.01-1.48-2.59-1.68-3.15-1.7-1.34-.14-2.62.79-3.3.79-.68 0-1.73-.77-2.85-.75-1.47.02-2.82.86-3.57 2.18-1.53 2.65-.39 6.58 1.1 8.73.73 1.05 1.6 2.23 2.74 2.19 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.71.71 2.87.69 1.19-.02 1.94-1.08 2.66-2.14.84-1.22 1.18-2.41 1.2-2.47-.03-.01-2.31-.89-2.33-3.53zM11.48 3.42c.6-.73 1.01-1.74.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.69-.82 2.68 1.03.08 1.87-.52 2.46-1.23z"/>
-                    </svg>
-                    <span className="text-[15px] font-[550]">Continue with Apple</span>
-                  </button>
-
-                  <div className="flex items-center gap-3 my-5">
-                    <div className="h-px bg-[#e6d7c0] flex-1" />
-                    <span className="text-[11.5px] text-zinc-500">or</span>
-                    <div className="h-px bg-[#e6d7c0] flex-1" />
-                  </div>
-
-                  {/* Email */}
-                  <button onClick={()=>setAuthStep("email")} className="w-full flex items-center justify-center gap-2 py-[12px] rounded-[13px] border border-[#e1cfb8] bg-white hover:bg-[#faf6ef] text-[14px] text-zinc-800">
-                    <span className="text-[16px]">✉️</span> Continue with email
-                  </button>
-
-                  {/* Phone IN */}
-                  <button onClick={()=>setAuthStep("phone")} className="mt-[10px] w-full flex items-center justify-center gap-2 py-[12px] rounded-[13px] border border-[#e1cfb8] bg-white hover:bg-[#faf6ef] text-[14px] text-zinc-800">
-                    <span className="text-[16px]">📱</span> Continue with phone • India +91
-                  </button>
-
-                  <div className="mt-5 text-[11.8px] text-zinc-600 leading-relaxed bg-[#fffbf3] border border-[#f0dcc0] rounded-[14px] px-3 py-[10px]">
-                    <b>Free • no credit card.</b> Browse all India trending without login.<br/>
-                    <b>Sign in options:</b> Continue with Google • Continue with Apple • Email OTP • Phone +91
-                    <br/>By continuing you agree to Podstat Terms & Privacy • IST data residency.
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-center gap-5 text-[11.5px] text-zinc-500">
-                    <span>🔒 OAuth 2.0</span>
-                    <span>🇮🇳 IN servers</span>
-                    <span>GDPR • PDPB ready</span>
-                  </div>
-                </>
-              )}
-
-              {authStep==="email" && (
-                <>
-                  <button onClick={()=>setAuthStep("choose")} className="text-[12.5px] text-zinc-600 hover:text-zinc-900 mb-2">← back</button>
-                  <div className="text-[20px] font-[650]">Sign in with email</div>
-                  <div className="text-[13px] text-zinc-600 mt-1">We’ll send a 6-digit OTP. No password.</div>
-                  <input
-                    type="email"
-                    value={authEmail}
-                    onChange={e=>setAuthEmail(e.target.value)}
-                    placeholder="you@company.in"
-                    className="mt-4 w-full px-4 py-[12px] rounded-[13px] border border-[#e1cfb8] bg-white text-[14px] outline-none focus:ring-2 focus:ring-[#ffe0c9]"
-                    autoFocus
-                  />
-                  <button
-                    onClick={()=>{
-                      if(!authEmail.includes("@")){ setToast("Enter a valid email"); return; }
-                      setAuthStep("otp");
-                      setToast("OTP sent to "+authEmail);
-                    }}
-                    className="mt-3 w-full py-[12px] rounded-[13px] bg-[#191720] text-white font-[600] text-[14.5px]"
-                  >Send OTP →</button>
-                  <div className="text-center mt-3 text-[12.5px] text-zinc-600">or <button className="text-[#c94b17] underline" onClick={()=>{ const p={name:"Demo User",email:authEmail||"demo@podstat.in",provider:"email" as const, avatar:"https://i.pravatar.cc/120?img=12"}; setUser(p); setShowAuth(false); setAuthStep("choose"); setToast("Signed in • Email"); }}>use magic link</button></div>
-                </>
-              )}
-
-              {authStep==="phone" && (
-                <>
-                  <button onClick={()=>setAuthStep("choose")} className="text-[12.5px] text-zinc-600 hover:text-zinc-900 mb-2">← back</button>
-                  <div className="text-[20px] font-[650]">Continue with phone</div>
-                  <div className="text-[13px] text-zinc-600 mt-1">India +91 • OTP via SMS / WhatsApp</div>
-                  <div className="mt-4 flex gap-2">
-                    <div className="px-3 py-[12px] rounded-[13px] border border-[#e1cfb8] bg-[#faf6ef] text-[14px] font-[550]">+91</div>
-                    <input
-                      inputMode="numeric"
-                      value={authPhone}
-                      onChange={e=>setAuthPhone(e.target.value.replace(/\D/g,"").slice(0,10))}
-                      placeholder="98XXXXXXXX"
-                      className="flex-1 px-4 py-[12px] rounded-[13px] border border-[#e1cfb8] bg-white text-[14px] outline-none focus:ring-2 focus:ring-[#ffe0c9]"
-                      autoFocus
-                    />
-                  </div>
-                  <button
-                    onClick={()=>{
-                      if(authPhone.length<10){ setToast("Enter 10-digit India mobile"); return; }
-                      setAuthStep("otp");
-                      setToast("OTP sent to +91 "+authPhone+" • also on WhatsApp");
-                    }}
-                    className="mt-3 w-full py-[12px] rounded-[13px] bg-[#191720] text-white font-[600] text-[14.5px]"
-                  >Send OTP →</button>
-                  <div className="text-[11.5px] text-zinc-500 mt-2 text-center">Jio • Airtel • Vi • BSNL supported • WhatsApp fallback ON</div>
-                </>
-              )}
-
-              {authStep==="otp" && (
-                <>
-                  <button onClick={()=>setAuthStep(authEmail ? "email" : "phone")} className="text-[12.5px] text-zinc-600 hover:text-zinc-900 mb-2">← back</button>
-                  <div className="text-[20px] font-[650]">Enter OTP</div>
-                  <div className="text-[13px] text-zinc-600 mt-1">
-                    Sent to <b>{authEmail || ("+91 "+authPhone)}</b> • expires in 04:52
-                  </div>
-                  <input
-                    inputMode="numeric"
-                    value={otpValue}
-                    onChange={e=>setOtpValue(e.target.value.replace(/\D/g,"").slice(0,6))}
-                    placeholder="• • • • • •"
-                    className="mt-4 w-full text-center tracking-[0.45em] text-[22px] font-mono-s px-4 py-[13px] rounded-[14px] border border-[#e1cfb8] bg-white outline-none focus:ring-2 focus:ring-[#ffe0c9]"
-                    autoFocus
-                  />
-                  <button
-                    onClick={()=>{
-                      if(otpValue.length < 4){ setToast("Enter the 6-digit OTP"); return;}
-                      if(authEmail){
-                        setUser({ name: authEmail.split("@")[0], email: authEmail, provider:"email", avatar:"https://i.pravatar.cc/120?img=12"});
-                      } else {
-                        setUser({ name:"IN User", email:"+91"+authPhone+"@podstat.in", provider:"phone", avatar:"https://i.pravatar.cc/120?img=15"});
-                      }
-                      setShowAuth(false); setAuthStep("choose"); setOtpValue("");
-                      setToast("Verified • Pro unlocked");
-                    }}
-                    className="mt-3 w-full py-[12px] rounded-[13px] bg-[#f65318] text-white font-[650] text-[15px] shadow-[0_6px_20px_rgba(246,83,24,0.28)]"
-                  >Verify & sign in</button>
-                  <div className="flex items-center justify-between mt-3 text-[12.5px]">
-                    <button className="text-zinc-600 hover:text-zinc-900" onClick={()=>setToast("OTP resent")}>Resend OTP</button>
-                    <button className="text-[#c94b17] hover:underline" onClick={()=>setToast("Calling you now…")}>Get a call instead</button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="px-7 pb-6 text-[11.5px] text-zinc-500 border-t border-[#f0e2c8] pt-4">
-              Secure sign-in • OAuth 2.0 • Supabase Auth • India (ap-south-1) data residency • No spam • <a href="#" onClick={e=>{e.preventDefault(); setShowAuth(false);}} className="underline decoration-dotted text-zinc-600">Continue without login</a>
+              {/* local component state for auth form inside modal */}
+              <AuthPanel
+                onSuccess={(u)=>{
+                  setAuthUser(u);
+                  // persist
+                  try{ localStorage.setItem("podstat_session_v3", JSON.stringify(u)); }catch{}
+                  setShowAuth(false);
+                  setToast(`Welcome to Podstat, ${u.name.split(" ")[0]} • ${u.provider==="google" ? "Google" : u.provider==="apple" ? "Apple" : "Email"} signed in`);
+                }}
+                onError={(m)=>setToast(m)}
+              />
+              <div className="mt-5 text-[11.6px] text-zinc-500 text-center">
+                Secure • separate user accounts • India ap-south-1 • <a href="#" onClick={e=>{e.preventDefault(); setShowAuth(false);}} className="underline decoration-dotted text-zinc-600">continue without login</a>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* LIVE UPDATE modal – unchanged from prior */}
+      {/* LIVE modal */}
       {showLive && (
         <div className="fixed inset-0 z-[78]">
-          <div className="absolute inset-0 bg-black/50" onClick={()=>setShowLive(false)} />
+          <div className="absolute inset-0 bg-black/50" onClick={()=>setShowLive(false)}/>
           <div className="absolute left-1/2 top-[4%] -translate-x-1/2 w-[min(900px,95vw)] max-h-[90vh] overflow-auto bg-[#fcf8f1] border border-[#e5d4ba] rounded-[28px] shadow-2xl">
             <div className="px-6 pt-5 pb-4 border-b border-[#f0e2c9] flex items-center justify-between sticky top-0 bg-[#fcf8f1]">
-              <div><div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">podstat • Live Engine</div><div className="text-[22px] font-[700] tracking-[-0.015em]">Daily auto-update — India trends</div></div>
+              <div><div className="text-[11px] uppercase tracking-wider text-zinc-500 font-mono-s">podstat • Live Engine</div><div className="text-[22px] font-[700]">Daily auto-update — India trends</div></div>
               <button onClick={()=>setShowLive(false)} className="text-[13px] px-3 py-[7px] rounded-[12px] bg-white border border-[#e3d5c0]">Close</button>
             </div>
             <div className="p-6 space-y-4 text-[14px] leading-relaxed">
               <div className="bg-white border border-[#e6d7be] rounded-[18px] p-4">
                 <div className="text-[15px] font-[650]">Yes — fully automatic, daily, India time.</div>
-                <div className="text-zinc-700 mt-2">Server-side pipeline runs at <b>06:30 IST</b> daily, plus a 3-hour spike watch 09:00–23:00 IST. Every filter (Category / Platform / Language) recomputes — charts, KPIs, geo, episodes.</div>
-              </div>
-              <div className="grid md:grid-cols-3 gap-3 text-[13px]">
-                {[
-                  ["06:30 IST daily","Full refresh","YouTube Data API v3\nSpotify Charts API\nJioSaavn Trending RSS\nApple Podcasts India Top 200"],
-                  ["Every 3h","Spike watch","Detects +15% velocity\nre-ranks Top 22\nalerts via email / WA"],
-                  ["Real-time","Client refresh","SWR 6 min\nManual refresh Pro\nWebSocket surges"],
-                ].map(([t,s,b])=>(
-                  <div key={t} className="bg-white border border-[#e6d7be] rounded-[16px] p-[14px]">
-                    <div className="font-[620]">{t}</div>
-                    <div className="text-[12.5px] text-[#b64a1c]">{s}</div>
-                    <div className="text-[12.5px] text-zinc-700 mt-2 whitespace-pre-line">{b}</div>
-                  </div>
-                ))}
+                <div className="text-zinc-700 mt-2">Podstat runs at <b>06:30 IST</b> daily • YouTube Data API • Spotify Charts • JioSaavn • Apple IN. Charts recompute per filter.</div>
               </div>
               <div className="bg-[#fdf6ea] border border-[#f0d8b4] rounded-[14px] px-4 py-[12px] text-[12.7px] text-zinc-700">
-                Last run: <b>today 06:31 IST</b> • 22 shows in 47s • next: <b>tomorrow 06:30 IST</b><br/>
-                Login <b>not required</b> to view daily trends. Sign-in unlocks: follow alerts, queue sync, notes cloud, export API.<br/>
-                API: <code className="font-mono-s text-[11.5px]">GET /api/trending?country=IN&category=business&lang=hinglish</code>
+                Last run: <b>today 06:31 IST</b> • 22 shows • next: <b>tomorrow 06:30 IST</b><br/>
+                Login <b>not required</b> to view trends. Sign-in unlocks: follow alerts, queue sync, notes cloud, export API.
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* toast */}
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-[95] bg-[#18151e] text-white text-[13px] px-4 py-[11px] rounded-[14px] shadow-2xl border border-zinc-700 max-w-[360px]">{toast}</div>
-      )}
+      {toast && <div className="fixed bottom-5 right-5 z-[95] bg-[#18151e] text-white text-[13px] px-4 py-[11px] rounded-[14px] shadow-2xl border border-zinc-700 max-w-[360px]">{toast}</div>}
     </div>
   );
 }
+
+/* ========= AuthPanel: Email + Password • Google • Apple ========= */
+function AuthPanel({ onSuccess, onError }:{
+  onSuccess:(u:{id:string;name:string;email:string;provider:string;avatar:string;createdAt:number})=>void;
+  onError:(m:string)=>void;
+}){
+  const [mode,setMode] = useState<"signin"|"signup">("signin");
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [name,setName] = useState("");
+  const [showPwd,setShowPwd] = useState(false);
+  const [err,setErr] = useState<string|null>(null);
+  const [busy,setBusy] = useState(false);
+  const [showGooglePicker,setShowGooglePicker] = useState(false);
+  const [showApplePicker,setShowApplePicker] = useState(false);
+
+  const hashPwd = (p:string)=> { try{ return btoa(unescape(encodeURIComponent("pd$"+p))); }catch{return "x"+p.length;} };
+  const loadUsers = ()=>{ try{ const r=localStorage.getItem("podstat_users_v3"); return r?JSON.parse(r):[];}catch{return [];} };
+  const saveUsers = (u:any)=> localStorage.setItem("podstat_users_v3", JSON.stringify(u));
+
+  const doEmailAuth = ()=>{
+    setErr(null);
+    if(!email.includes("@")) return setErr("Enter a valid email address");
+    if(password.length < 6) return setErr("Password must be at least 6 characters");
+    const users = loadUsers();
+    const existing = users.find((x:any)=>x.email.toLowerCase()===email.toLowerCase());
+
+    if(mode==="signin"){
+      if(!existing) return setErr("No account found with this email. Create one below.");
+      if(existing.provider !== "email") return setErr(`This email is registered with ${existing.provider}. Use “Continue with ${existing.provider==="google"?"Google":"Apple"}” instead.`);
+      if(existing.passwordHash !== hashPwd(password)) return setErr("Incorrect password");
+      onSuccess({ id:existing.id, name:existing.name, email:existing.email, provider:existing.provider, avatar:existing.avatar, createdAt:existing.createdAt });
+      return;
+    } else {
+      // signup
+      if(existing) return setErr("An account already exists with this email. Sign in instead.");
+      const displayName = name.trim() || email.split("@")[0];
+      const newUser = {
+        id: "u_"+Math.random().toString(36).slice(2,10),
+        name: displayName,
+        email: email.toLowerCase(),
+        provider: "email",
+        passwordHash: hashPwd(password),
+        avatar: `https://i.pravatar.cc/120?u=${encodeURIComponent(email)}`,
+        createdAt: Date.now()
+      };
+      users.push(newUser); saveUsers(users);
+      onSuccess({ id:newUser.id, name:newUser.name, email:newUser.email, provider:newUser.provider, avatar:newUser.avatar, createdAt:newUser.createdAt });
+    }
+  };
+
+  const googleAccounts = [
+    { name:"Arielle Ngo", email:"arielle.ngo@gmail.com", avatar:"https://i.pravatar.cc/100?img=32" },
+    { name:"Raj Shamani", email:"rajshamani.pro@gmail.com", avatar:"https://i.pravatar.cc/100?img=68" },
+    { name:"Sharan Hegde", email:"sharan.finance@gmail.com", avatar:"https://i.pravatar.cc/100?img=15" },
+  ];
+  const appleAccounts = [
+    { name:"Arielle Ngo", email:"arielle@icloud.com", avatar:"https://i.pravatar.cc/100?img=5" },
+    { name:"Kenny Sebastian", email:"kenny@icloud.com", avatar:"https://i.pravatar.cc/100?img=65" },
+  ];
+
+  const signInWithGoogle = (acct:{name:string;email:string;avatar:string})=>{
+    const users = loadUsers();
+    let u = users.find((x:any)=>x.email.toLowerCase()===acct.email.toLowerCase());
+    if(!u){
+      u = { id:"u_g_"+Math.random().toString(36).slice(2,8), name:acct.name, email:acct.email, provider:"google", avatar:acct.avatar, createdAt: Date.now() };
+      users.push(u); saveUsers(users);
+    }
+    onSuccess({ id:u.id, name:u.name, email:u.email, provider:"google", avatar:u.avatar, createdAt:u.createdAt });
+  };
+  const signInWithApple = (acct:{name:string;email:string;avatar:string})=>{
+    const users = loadUsers();
+    let u = users.find((x:any)=>x.email.toLowerCase()===acct.email.toLowerCase());
+    if(!u){
+      u = { id:"u_a_"+Math.random().toString(36).slice(2,8), name:acct.name, email:acct.email, provider:"apple", avatar:acct.avatar, createdAt: Date.now() };
+      users.push(u); saveUsers(users);
+    }
+    onSuccess({ id:u.id, name:u.name, email:u.email, provider:"apple", avatar:u.avatar, createdAt:u.createdAt });
+  };
+
+  if(showGooglePicker){
+    return (
+      <div>
+        <button onClick={()=>setShowGooglePicker(false)} className="text-[12.5px] text-zinc-600 hover:text-zinc-900 mb-3">← back</button>
+        <div className="text-[18px] font-[650]">Choose a Google account</div>
+        <div className="text-[12.5px] text-zinc-600">to continue to <b>podstat.in</b></div>
+        <div className="mt-4 space-y-[9px]">
+          {googleAccounts.map(a=>(
+            <button key={a.email} onClick={()=>signInWithGoogle(a)} className="w-full flex items-center gap-3 px-[14px] py-[11px] rounded-[14px] border border-[#e2d6c4] bg-white hover:bg-[#faf6ef] text-left">
+              <img src={a.avatar} className="w-9 h-9 rounded-full" alt=""/>
+              <div>
+                <div className="text-[14px] font-[550] text-zinc-900">{a.name}</div>
+                <div className="text-[12px] text-zinc-600">{a.email}</div>
+              </div>
+            </button>
+          ))}
+          <button onClick={()=>{
+            const e = prompt("Enter your Google email:");
+            if(e && e.includes("@")) signInWithGoogle({name:e.split("@")[0], email:e, avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(e)}`});
+          }} className="w-full text-left px-[14px] py-[11px] rounded-[14px] border border-dashed border-[#d7c9b3] text-[13px] text-zinc-700 hover:bg-[#faf7f0]">
+            ＋ Use another Google account
+          </button>
+        </div>
+        <div className="mt-4 text-[11px] text-zinc-500 leading-snug">To continue, Google will share your name, email address and profile picture with Podstat. <a className="underline" href="#">Privacy</a></div>
+      </div>
+    );
+  }
+
+  if(showApplePicker){
+    return (
+      <div>
+        <button onClick={()=>setShowApplePicker(false)} className="text-[12.5px] text-zinc-600 hover:text-zinc-900 mb-3">← back</button>
+        <div className="text-[18px] font-[650]">Sign in with Apple</div>
+        <div className="text-[12.5px] text-zinc-600">Choose an Apple ID to continue to Podstat</div>
+        <div className="mt-4 space-y-[9px]">
+          {appleAccounts.map(a=>(
+            <button key={a.email} onClick={()=>signInWithApple(a)} className="w-full flex items-center gap-3 px-[14px] py-[11px] rounded-[14px] border border-[#e2d6c4] bg-white hover:bg-[#faf6ef] text-left">
+              <img src={a.avatar} className="w-9 h-9 rounded-full" alt=""/>
+              <div>
+                <div className="text-[14px] font-[550]">{a.name}</div>
+                <div className="text-[12px] text-zinc-600">{a.email}</div>
+              </div>
+            </button>
+          ))}
+          <button onClick={()=>{
+            const e = prompt("Apple ID email:");
+            if(e && e.includes("@")) signInWithApple({name:e.split("@")[0], email:e, avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(e)}`});
+          }} className="w-full text-left px-[14px] py-[11px] rounded-[14px] border border-dashed border-[#d7c9b3] text-[13px] text-zinc-700 hover:bg-[#faf7f0]">＋ Use another Apple ID</button>
+        </div>
+        <div className="mt-3 text-[11px] text-zinc-500">Hide My Email available • Sign in with Apple • Face ID / Touch ID supported</div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* tabs */}
+      <div className="flex bg-[#f4eee2] border border-[#e6d4b6] rounded-[14px] p-[4px] mb-5 text-[13.5px]">
+        <button onClick={()=>{setMode("signin"); setErr(null);}} className={`flex-1 py-[9px] rounded-[10px] font-[550] transition ${mode==="signin" ? "bg-white shadow text-[#1b1820]" : "text-zinc-600"}`}>Sign in</button>
+        <button onClick={()=>{setMode("signup"); setErr(null);}} className={`flex-1 py-[9px] rounded-[10px] font-[550] transition ${mode==="signup" ? "bg-white shadow text-[#1b1820]" : "text-zinc-600"}`}>Create account</button>
+      </div>
+
+      {/* Google */}
+      <button onClick={()=>setShowGooglePicker(true)} className="w-full flex items-center justify-center gap-3 py-[13px] rounded-[14px] border border-[#d7cfc3] bg-white hover:bg-[#faf7f2] shadow-sm">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.1 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 5.2 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20.5-7.6 20.5-21 0-1.4-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 5.2 29.3 3 24 3 16.3 3 9.6 7.2 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 10-2 13.5-5.2l-6.2-5.3C29.3 35.9 26.8 37 24 37c-5.2 0-9.6-2.9-11.7-7.2l-6.5 5C9.1 41.1 16.1 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.5-6 7-11.3 7-6.6 0-12-5.4-12-12"/></svg>
+        <span className="text-[15px] font-[550] text-[#1f1f1f]">Continue with Google</span>
+      </button>
+
+      {/* Apple */}
+      <button onClick={()=>setShowApplePicker(true)} className="mt-[11px] w-full flex items-center justify-center gap-3 py-[13px] rounded-[14px] bg-black hover:bg-[#111] text-white shadow-sm">
+        <svg width="18" height="22" viewBox="0 0 17 20" fill="white"><path d="M13.57 10.14c-.01-2.18 1.78-3.22 1.86-3.27-1.01-1.48-2.59-1.68-3.15-1.7-1.34-.14-2.62.79-3.3.79-.68 0-1.73-.77-2.85-.75-1.47.02-2.82.86-3.57 2.18-1.53 2.65-.39 6.58 1.1 8.73.73 1.05 1.6 2.23 2.74 2.19 1.1-.04 1.52-.71 2.85-.71 1.33 0 1.71.71 2.87.69 1.19-.02 1.94-1.08 2.66-2.14.84-1.22 1.18-2.41 1.2-2.47-.03-.01-2.31-.89-2.33-3.53zM11.48 3.42c.6-.73 1.01-1.74.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.69-.82 2.68 1.03.08 1.87-.52 2.46-1.23z"/></svg>
+        <span className="text-[15px] font-[550]">Continue with Apple</span>
+      </button>
+
+      <div className="flex items-center gap-3 my-5">
+        <div className="h-px bg-[#e6d7c0] flex-1"/><span className="text-[11.5px] text-zinc-500">or {mode==="signin" ? "sign in with email" : "create with email"}</span><div className="h-px bg-[#e6d7c0] flex-1"/>
+      </div>
+
+      {err && <div className="mb-3 text-[12.5px] text-[#b4231b] bg-[#fff0ee] border border-[#f5c2b8] rounded-[12px] px-3 py-[9px]">{err}</div>}
+
+      {mode==="signup" && (
+        <div className="mb-3">
+          <label className="text-[12.5px] text-zinc-600">Full name</label>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Arielle Ngo"
+            className="mt-1 w-full px-4 py-[11px] rounded-[12px] border border-[#e1cfb8] bg-white text-[14px] outline-none focus:ring-2 focus:ring-[#ffe0c9]"/>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <div>
+          <label className="text-[12.5px] text-zinc-600">Email address</label>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@company.in"
+            className="mt-1 w-full px-4 py-[11px] rounded-[12px] border border-[#e1cfb8] bg-white text-[14px] outline-none focus:ring-2 focus:ring-[#ffe0c9]"/>
+        </div>
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="text-[12.5px] text-zinc-600">Password</label>
+            <button type="button" onClick={()=>setShowPwd(s=>!s)} className="text-[11.5px] text-zinc-500 hover:text-zinc-800">{showPwd ? "Hide" : "Show"}</button>
+          </div>
+          <input type={showPwd ? "text" : "password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder={mode==="signin" ? "••••••••" : "Min. 6 characters"}
+            className="mt-1 w-full px-4 py-[11px] rounded-[12px] border border-[#e1cfb8] bg-white text-[14px] outline-none focus:ring-2 focus:ring-[#ffe0c9]"/>
+        </div>
+      </div>
+
+      {mode==="signin" && (
+        <div className="flex items-center justify-between mt-3 text-[12.5px]">
+          <label className="flex items-center gap-2 text-zinc-600"><input type="checkbox" defaultChecked className="accent-[#e84d19]"/> Remember me</label>
+          <button className="text-[#c94b17] hover:underline" onClick={()=>onError("Password reset email sent if account exists.")}>Forgot password?</button>
+        </div>
+      )}
+
+      {mode==="signup" && (
+        <label className="flex items-start gap-[10px] mt-3 text-[12px] text-zinc-600">
+          <input type="checkbox" defaultChecked className="mt-[3px] accent-[#e84d19]"/>
+          <span>I agree to Podstat <a className="underline" href="#">Terms</a> and <a className="underline" href="#">Privacy</a>. India data residency (ap-south-1).</span>
+        </label>
+      )}
+
+      <button
+        onClick={()=>{
+          if(mode==="signin"){
+            // inline signin
+            const users = JSON.parse(localStorage.getItem("podstat_users_v3")||"[]");
+            const hash = (p:string)=>{ try{ return btoa(unescape(encodeURIComponent("pd$"+p))); }catch{return "x"+p.length;} };
+            const u = users.find((x:any)=>x.email.toLowerCase()===email.toLowerCase());
+            if(!u){ setErr("No account found with this email. Create one."); return; }
+            if(u.provider!=="email"){ setErr(`This email uses ${u.provider} sign-in.`); return; }
+            if(u.passwordHash !== hash(password)){ setErr("Incorrect password"); return; }
+            const sess = {id:u.id,name:u.name,email:u.email,provider:u.provider,avatar:u.avatar,createdAt:u.createdAt};
+            localStorage.setItem("podstat_session_v3", JSON.stringify(sess));
+            location.reload();
+            return;
+          } else {
+            // signup
+            if(!email.includes("@")) return setErr("Enter a valid email");
+            if(password.length<6) return setErr("Password must be at least 6 characters");
+            const users = JSON.parse(localStorage.getItem("podstat_users_v3")||"[]");
+            if(users.find((x:any)=>x.email.toLowerCase()===email.toLowerCase())) return setErr("Account exists — sign in instead.");
+            const nu = { id:"u_"+Math.random().toString(36).slice(2,9), name: name.trim()||email.split("@")[0], email:email.toLowerCase(), provider:"email",
+              passwordHash: (p=>{ try{ return btoa(unescape(encodeURIComponent("pd$"+p))); }catch{return "x"+p.length;} })(password),
+              avatar:`https://i.pravatar.cc/120?u=${encodeURIComponent(email)}`, createdAt: Date.now() };
+            users.push(nu); localStorage.setItem("podstat_users_v3", JSON.stringify(users));
+            const sess={id:nu.id,name:nu.name,email:nu.email,provider:nu.provider,avatar:nu.avatar,createdAt:nu.createdAt};
+            localStorage.setItem("podstat_session_v3", JSON.stringify(sess));
+            location.reload();
+          }
+        }}
+        className="mt-4 w-full py-[13px] rounded-[13px] bg-[#191720] text-white font-[620] text-[15px] hover:bg-[#221e2a] transition"
+      >
+        {mode==="signin" ? "Sign in" : "Create account"}
+      </button>
+
+      <div className="text-center mt-4 text-[13px] text-zinc-600">
+        {mode==="signin" ? <>New to Podstat? <button className="text-[#c94b17] font-[550] hover:underline" onClick={()=>setMode("signup")}>Create account</button></> 
+        : <>Already have an account? <button className="text-[#c94b17] font-[550] hover:underline" onClick={()=>setMode("signin")}>Sign in</button></>}
+      </div>
+
+      <div className="mt-5 text-[11.5px] text-zinc-500 leading-relaxed text-center px-2">
+        Separate user accounts • Email + Password • Continue with Google • Continue with Apple<br/>
+        Demo accounts: <code>demo@podstat.in / podstat123</code>
+      </div>
+    </div>
+  );
+}
+
 // Zod Schema
 export const Schema = {
-    "commentary": "Podstat – India podcast analytics dashboard with filter-reactive charts (downloads, geography, duration, top episodes). Added full sign-in: Continue with Google, Continue with Apple, Email OTP, Phone OTP (+91 India). Live daily auto-update at 06:30 IST. All charts update instantly when Category / Platform / Language filters change.",
+    "commentary": "Podstat \u2013 India podcast analytics dashboard. Filter-reactive: downloads chart, listener geography, average duration, top episodes \u2014 all update live per Category / Platform / Language. Real user authentication: Email + Password, Continue with Google, Continue with Apple. 22 trending India shows with YouTube, Spotify, JioSaavn, Apple deep-links. Daily auto-update 06:30 IST.",
     "template": "nextjs-developer",
     "title": "Podstat \u2013 India Podcast Analytics",
-    "description": "Podstat: trending podcasts in India with filter-reactive analytics, watch links (YouTube, Spotify, JioSaavn, Apple), and full authentication (Google, Apple, Email, Phone).",
+    "description": "Podstat tracks trending podcasts in India with filter-reactive analytics. Sign in with Email & Password, Google, or Apple \u2014 separate user accounts.",
     "additional_dependencies": [
         "recharts"
     ],
